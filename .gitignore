@@ -1,0 +1,79 @@
+# ============================================================
+#  .gitignore — Lending System
+#  ============================================================
+# 
+# This file prevents sensitive files and folders from being
+# committed to version control. NEVER commit user data!
+#
+
+# 📁 User Uploads (CRITICAL - Contains sensitive documents)
+uploads/
+user_uploads/
+
+# 🔐 Configuration Files (Contains database credentials)
+config.php
+.env
+.env.local
+.env.production
+
+# 🗄️ Database Files
+*.sql
+*.db
+*.sqlite
+*.sqlite3
+
+# 📝 Logs and Debug Files
+*.log
+error.log
+access.log
+debug.log
+php_errors.log
+
+# 🖼️ Temporary Files
+tmp/
+temp/
+cache/
+*.tmp
+*.temp
+
+# 💻 IDE and Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# 📦 Composer and Dependencies
+vendor/
+composer.lock
+
+# 🏗️ Build and Deployment Files
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 🔒 Backup Files
+*.bak
+*.backup
+*.old
+
+# 📊 Session Files
+sessions/
+*.sess
+
+# 🌍 Local Development
+.local/
+.localhost/
+dev_*
+test_*
+
+# 🚨 Security Sensitive Files
+*.key
+*.pem
+*.crt
+*.p12
+passwords.txt
+secrets.txt
