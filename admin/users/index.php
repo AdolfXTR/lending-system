@@ -8,13 +8,13 @@ require_once __DIR__ . '/../../helpers.php';
 $pageTitle = 'Users Management';
 
 $filter  = $_GET['filter'] ?? 'All';
-$allowed = ['All', 'Active', 'Disabled', 'Pending'];
+$allowed = ['All', 'Active', 'Disabled'];
 if (!in_array($filter, $allowed)) $filter = 'All';
 
 $search = trim($_GET['search'] ?? '');
 
-$conditions = [];
-$params     = [];
+$conditions = ['status != :exclude1', 'status != :exclude2'];
+$params     = [':exclude1' => 'Pending', ':exclude2' => 'Rejected'];
 
 if ($filter !== 'All') {
     $conditions[] = 'status = :status';
@@ -45,7 +45,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 
 <!-- Filter Tabs -->
 <ul class="nav nav-tabs mb-3">
-    <?php foreach (['All','Active','Disabled','Pending'] as $tab): ?>
+    <?php foreach (['All','Active','Disabled'] as $tab): ?>
     <li class="nav-item">
         <a class="nav-link <?= $filter === $tab ? 'active' : '' ?>"
            href="?filter=<?= $tab ?>&search=<?= urlencode($search) ?>">
@@ -102,7 +102,6 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                         $badge = match($u['status']) {
                             'Active'   => 'success',
                             'Disabled' => 'danger',
-                            'Pending'  => 'warning',
                             default    => 'secondary'
                         };
                     ?>
@@ -119,7 +118,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                             </span>
                         </td>
                         <td>
-                            <span class="badge bg-<?= $badge ?> <?= $u['status']==='Pending'?'text-dark':'' ?>">
+                            <span class="badge bg-<?= $badge ?>">
                                 <?= $u['status'] ?>
                             </span>
                         </td>

@@ -28,6 +28,173 @@ $pageTitle = 'Billing — Month ' . $bill['month_number'];
 require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
+<style>
+/* Custom Payment Confirmation Modal Styles */
+.payment-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    backdrop-filter: blur(4px);
+}
+
+.payment-modal-content {
+    background: #1a1a1a;
+    border-radius: 12px;
+    padding: 0;
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    animation: paymentModalSlideIn 0.3s ease-out;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@keyframes paymentModalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.payment-modal-header {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    padding: 24px 24px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payment-modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.payment-modal-body {
+    padding: 24px;
+    background: #1a1a1a;
+    color: #ffffff;
+}
+
+.payment-summary {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payment-summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 14px;
+}
+
+.payment-summary-row:last-child {
+    border-bottom: none;
+}
+
+.payment-summary-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+
+.payment-summary-value {
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.payment-summary-value.amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: #10b981;
+}
+
+.payment-warning {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.payment-warning i {
+    color: #ef4444;
+    font-size: 18px;
+    margin-top: 2px;
+}
+
+.payment-warning-text {
+    color: #fca5a5;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.payment-modal-footer {
+    padding: 20px 24px 24px;
+    background: #1a1a1a;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.payment-modal-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    min-width: 120px;
+}
+
+.payment-modal-btn-cancel {
+    background: transparent;
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.payment-modal-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+.payment-modal-btn-confirm {
+    background: #10b981;
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.payment-modal-btn-confirm:hover {
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+</style>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <a href="index.php" class="text-decoration-none text-muted small">
@@ -40,10 +207,9 @@ require_once __DIR__ . '/../../includes/admin_header.php';
     </div>
 
     <?php if ($bill['status'] === 'Pending' || $bill['status'] === 'Overdue'): ?>
-    <form method="POST" action="mark_paid.php" onsubmit="return confirm('Mark this bill as paid?')">
-        <input type="hidden" name="id" value="<?= $bill['id'] ?>">
-        <button class="btn btn-success"><i class="bi bi-check-circle"></i> Mark as Paid</button>
-    </form>
+    <button class="btn btn-success" onclick="showPaymentConfirmation()">
+        <i class="bi bi-check-circle"></i> Mark as Paid
+    </button>
     <?php else: ?>
         <span class="badge fs-6 bg-<?= $bill['status']==='Completed'?'success':'secondary' ?>">
             <?= $bill['status'] ?>
@@ -52,6 +218,69 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 </div>
 
 <?= showFlash() ?>
+
+<!-- Custom Payment Confirmation Modal -->
+<div id="paymentConfirmationModal" class="payment-modal-overlay">
+    <div class="payment-modal-content">
+        <div class="payment-modal-header">
+            <h3 class="payment-modal-title">
+                <i class="bi bi-check-circle-fill"></i>
+                Confirm Payment
+            </h3>
+        </div>
+        <div class="payment-modal-body">
+            <div class="payment-summary">
+                <div class="payment-summary-row">
+                    <span class="payment-summary-label">Borrower Name</span>
+                    <span class="payment-summary-value"><?= clean($bill['first_name'] . ' ' . $bill['last_name']) ?></span>
+                </div>
+                <div class="payment-summary-row">
+                    <span class="payment-summary-label">Month</span>
+                    <span class="payment-summary-value">Month <?= $bill['month_number'] ?> of <?= $bill['term_months'] ?? '—' ?></span>
+                </div>
+                <div class="payment-summary-row">
+                    <span class="payment-summary-label">Total Amount Due</span>
+                    <span class="payment-summary-value amount"><?= formatMoney($bill['total_due']) ?></span>
+                </div>
+            </div>
+            
+            <div class="payment-warning">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                <div class="payment-warning-text">
+                    Make sure you have verified that the borrower has already transferred the payment before marking as paid. This action cannot be undone.
+                </div>
+            </div>
+        </div>
+        <div class="payment-modal-footer">
+            <button type="button" class="payment-modal-btn payment-modal-btn-cancel" onclick="hidePaymentConfirmation()">
+                Cancel
+            </button>
+            <form method="POST" action="mark_paid.php" style="display: inline;">
+                <input type="hidden" name="id" value="<?= $bill['id'] ?>">
+                <button type="submit" class="payment-modal-btn payment-modal-btn-confirm">
+                    Yes, Mark as Paid
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function showPaymentConfirmation() {
+    document.getElementById('paymentConfirmationModal').style.display = 'flex';
+}
+
+function hidePaymentConfirmation() {
+    document.getElementById('paymentConfirmationModal').style.display = 'none';
+}
+
+// Close modal when clicking outside
+document.getElementById('paymentConfirmationModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hidePaymentConfirmation();
+    }
+});
+</script>
 
 <div class="row g-3">
 

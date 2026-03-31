@@ -35,7 +35,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 
 <!-- Filter Tabs -->
 <ul class="nav nav-tabs mb-3">
-    <?php foreach (['Pending','Active','Disabled','All'] as $tab): ?>
+    <?php foreach (['Pending','Active','Disabled','Rejected','All'] as $tab): ?>
     <li class="nav-item">
         <a class="nav-link <?= $filter === $tab ? 'active' : '' ?>"
            href="?filter=<?= $tab ?>">
@@ -51,6 +51,22 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 </ul>
 
 <?= showFlash() ?>
+
+<?php if (isset($_SESSION['flash_success'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?= $_SESSION['flash_success'] ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <?php unset($_SESSION['flash_success']); ?>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['flash_error'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= $_SESSION['flash_error'] ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <?php unset($_SESSION['flash_error']); ?>
+<?php endif; ?>
 
 <div class="card border-0 shadow-sm">
     <div class="card-body p-0">
@@ -88,6 +104,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                                 'Pending'  => 'warning',
                                 'Active'   => 'success',
                                 'Disabled' => 'danger',
+                                'Rejected' => 'danger',
                                 default    => 'secondary'
                             };
                             ?>

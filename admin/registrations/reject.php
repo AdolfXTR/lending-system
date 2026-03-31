@@ -2,47 +2,40 @@
 // ============================================================
 //  admin/registrations/reject.php
 // ============================================================
-require_once __DIR__ . '/../../includes/admin_check.php';
+require_once __DIR__ . '/../../config.php';
 require_once __DIR__ . '/../../helpers.php';
-require_once __DIR__ . '/../../includes/mailer.php';
 
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') redirect(APP_URL . '/admin/registrations/index.php');
-
-$id     = (int)($_POST['id'] ?? 0);
-$reason = trim($_POST['reason'] ?? '');
-
-if (!$id || !$reason) {
-    setFlash('error', 'Missing required fields.');
-    redirect(APP_URL . '/admin/registrations/index.php');
+// Check if admin
+session_start();
+if (!isset($_SESSION['admin_id'])) {
+    die("Not authorized");
 }
 
-$stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? AND status = 'Pending' LIMIT 1");
-$stmt->execute([$id]);
-$user = $stmt->fetch();
+// Get data from POST or GET
+$id = (int)($_POST['id'] ?? $_GET['id'] ?? 0);
+$reason = trim($_POST['reason'] ?? $_GET['reason'] ?? '');
 
-if (!$user) {
-    setFlash('error', 'User not found or already processed.');
-    redirect(APP_URL . '/admin/registrations/index.php');
+// Validate
+if (!$id) {
+    $_SESSION['flash_error'] = "Missing ID";
+    header("Location: " . APP_URL . "/admin/registrations/index.php");
+    exit;
 }
 
-// Mark as Rejected with auto-delete date (30 days from now)
-$deleteAt = date('Y-m-d H:i:s', strtotime('+30 days'));
-$pdo->prepare("UPDATE users SET status = 'Rejected', rejection_reason = ?, delete_at = ? WHERE id = ?")
-    ->execute([$reason, $deleteAt, $id]);
+if (!$reason) {
+    $reason = "Rejected by admin";
+}
 
-// Send email notification
-sendMail(
-    $user['email'],
-    $user['first_name'] . ' ' . $user['last_name'],
-    'Your Application Was Not Approved',
-    "
-    <p>Dear {$user['first_name']},</p>
-    <p>We regret to inform you that your registration application for <strong>" . APP_NAME . "</strong> has been <strong style='color:red;'>rejected</strong>.</p>
-    <p><strong>Reason:</strong> " . nl2br(htmlspecialchars($reason)) . "</p>
-    <p>If you believe this is an error or would like to reapply with corrected documents, please contact us.</p>
-    <p>Thank you.</p>
-    "
-);
+// Update user status to Rejected
+try {
+    $stmt = $pdo->prepare("UPDATE users SET status = 'Rejected' WHERE id = ?");
+    $stmt->execute([$id]);
+    
+    $_SESSION['flash_success'] = "Application rejected successfully";
+} catch (Exception $e) {
+    $_SESSION['flash_error'] = "Error: " . $e->getMessage();
+}
 
-setFlash('success', 'Application rejected. The applicant has been notified via email.');
-redirect(APP_URL . '/admin/registrations/index.php');
+header("Location: " . APP_URL . "/admin/registrations/index.php");
+exit;
+?>

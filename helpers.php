@@ -82,6 +82,14 @@ function isAdmin(): bool {
 
 // ── Check Premium account ─────────────────────────────────────
 function isPremium(): bool {
+    // Always check fresh data from database if user is logged in
+    if (isset($_SESSION['user_id']) && isset($pdo)) {
+        $stmt = $pdo->prepare("SELECT account_type FROM users WHERE id = ? LIMIT 1");
+        $stmt->execute([$_SESSION['user_id']]);
+        $user = $stmt->fetch();
+        return $user && $user['account_type'] === 'Premium';
+    }
+    // Fallback to session data (for cases where $pdo is not available)
     return isset($_SESSION['account_type']) && $_SESSION['account_type'] === 'Premium';
 }
 

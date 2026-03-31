@@ -123,6 +123,18 @@ try {
         KEY `idx_distribution_id` (`distribution_id`),
         KEY `idx_year` (`year`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Company Income Deductions for Money Back'");
+    // Check if rejection_reason column exists in users table
+    $checkRejectionReason = $pdo->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='rejection_reason' AND TABLE_SCHEMA='$dbName'")->fetch();
+    if (!$checkRejectionReason) {
+        $pdo->exec("ALTER TABLE `users` ADD COLUMN `rejection_reason` TEXT NULL DEFAULT NULL COMMENT 'Reason for rejection' AFTER `status`");
+    }
+    
+    // Check if delete_at column exists in users table
+    $checkDeleteAt = $pdo->query("SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME='users' AND COLUMN_NAME='delete_at' AND TABLE_SCHEMA='$dbName'")->fetch();
+    if (!$checkDeleteAt) {
+        $pdo->exec("ALTER TABLE `users` ADD COLUMN `delete_at` datetime NULL DEFAULT NULL COMMENT 'Auto-delete date for rejected accounts' AFTER `rejection_reason`");
+    }
+    
 } catch (Exception $e) {
     // Migration errors are non-critical, just log them
 }

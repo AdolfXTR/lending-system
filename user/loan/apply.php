@@ -30,13 +30,13 @@ $stmt = $pdo->prepare("SELECT id FROM loans WHERE user_id = ? AND status IN ('Ac
 $stmt->execute([$uid]);
 $existing = $stmt->fetch();
 
-// Available terms based on requirements (only 1, 3, 6, 12 months allowed)
-$terms = [1, 3, 6, 12];
-$terms = array_filter($terms, fn($t) => $t <= $maxTerm);
+// Available terms based on user's max_term_months
+$allTerms = [1, 3, 6, 12, 15, 18, 21, 24, 27, 30, 32];
+$terms = array_filter($allTerms, fn($t) => $t <= $maxTerm);
 
-// Available amounts (₱5,000 to ₱10,000, multiples of 1,000 only)
+// Available amounts (₱5,000 to user's loan_limit, multiples of 1,000 only)
 $amounts = [];
-$maxApply = min($availableAmount, 10000); // Max ₱10,000 as per requirements
+$maxApply = $availableAmount; // Use user's actual available amount
 for ($a = 5000; $a <= $maxApply; $a += 1000) $amounts[] = $a;
 
 require_once __DIR__ . '/../../includes/header.php';
@@ -69,6 +69,189 @@ body.dark-mode .term-opt{background:#1e293b;border-color:rgba(255,255,255,.1);co
 body.dark-mode .term-opt:hover{border-color:#60a5fa;color:#60a5fa;background:#1e3a8a;}
 body.dark-mode .term-opt.picked{border-color:#60a5fa;background:#1e3a8a;color:#fbbf24;}
 body.dark-mode .preview{background:#1e293b;}
+
+/* Custom Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: #1B3B8B;
+    border-radius: 16px;
+    padding: 0;
+    max-width: 480px;
+    width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-header {
+    background: linear-gradient(135deg, #1B3B8B 0%, #2c4aa0 100%);
+    padding: 24px 24px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #FFD84D;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-body {
+    padding: 24px;
+    background: #1B3B8B;
+}
+
+.loan-summary {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 14px;
+}
+
+.summary-row:last-child {
+    border-bottom: none;
+}
+
+.summary-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+}
+
+.summary-value {
+    font-weight: 700;
+    color: #FFFFFF;
+}
+
+.summary-value.gold {
+    color: #FFD84D;
+}
+
+.summary-value.interest {
+    color: #FCA5A5;
+}
+
+.proceed-message {
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+}
+
+.modal-footer {
+    padding: 20px 24px 24px;
+    background: #1B3B8B;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    min-width: 100px;
+}
+
+.modal-btn-cancel {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+}
+
+.modal-btn-confirm {
+    background: #FFD84D;
+    color: #1B3B8B;
+    font-weight: 700;
+}
+
+.modal-btn-confirm:hover {
+    background: #FCCD2F;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(255, 216, 77, 0.3);
+}
+
+/* Alert Modal Styles */
+.alert-modal .modal-content {
+    background: #DC2626;
+}
+
+.alert-modal .modal-header {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+}
+
+.alert-modal .modal-title {
+    color: #FFFFFF;
+}
+
+.alert-modal .modal-body {
+    background: #DC2626;
+    color: #FFFFFF;
+    padding: 20px 24px;
+}
+
+.alert-modal .modal-footer {
+    background: #DC2626;
+    justify-content: center;
+}
+
+.alert-modal .modal-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.alert-modal .modal-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
 </style>
 
 <div style="margin-bottom:20px;">
@@ -190,6 +373,11 @@ body.dark-mode .preview{background:#1e293b;}
 <script>
 let selAmount = 0, selTerm = 0;
 
+// Format money in JavaScript
+function formatMoneyJS(amount) {
+    return '₱' + amount.toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+}
+
 function pickAmount(val, el) {
     document.querySelectorAll('.amount-opt').forEach(e => e.classList.remove('picked'));
     el.classList.add('picked');
@@ -235,39 +423,146 @@ function updatePreview() {
 
 function validateForm() {
     if (!selAmount || !selTerm) {
-        alert('Please select a loan amount and payment term.');
+        showAlert('Please select a loan amount and payment term.');
         return false;
     }
     
     // Validation for loan amount requirements
     if (selAmount < 5000) {
-        alert('❌ Invalid Amount\n\nMinimum loan amount is ₱5,000.\nPlease select a higher amount.');
+        showAlert('❌ Invalid Amount\n\nMinimum loan amount is ₱5,000.\nPlease select a higher amount.');
         return false;
     }
     
-    if (selAmount > 10000) {
-        alert('❌ Invalid Amount\n\nMaximum loan amount is ₱10,000.\nPlease select a lower amount.');
+    if (selAmount > <?= $loanLimit ?>) {
+        showAlert('❌ Invalid Amount\n\nMaximum loan amount is ' + formatMoneyJS(<?= $loanLimit ?>) + '.\nPlease select a lower amount.');
         return false;
     }
     
     // Check if amount is in thousands (already enforced by UI, but double-check)
     if (selAmount % 1000 !== 0) {
-        alert('❌ Invalid Amount\n\nLoan amounts must be in multiples of ₱1,000 only.\nExamples: ₱5,000, ₱6,000, ₱7,000, ₱8,000, ₱9,000, ₱10,000');
+        showAlert('❌ Invalid Amount\n\nLoan amounts must be in multiples of ₱1,000 only.\nExamples: ₱5,000, ₱6,000, ₱7,000, ₱8,000, ₱9,000<?= $loanLimit >= 10000 ? ', ₱10,000' : '' ?><?= $loanLimit >= 11000 ? ', ₱11,000' : '' ?><?= $loanLimit >= 12000 ? ', ₱12,000' : '' ?><?= $loanLimit >= 13000 ? ', ₱13,000' : '' ?>');
         return false;
     }
     
     // Validation for term requirements
-    const allowedTerms = [1, 3, 6, 12];
+    const allowedTerms = [1, 3, 6, 12, 15, 18, 21, 24, 27, 30, 32];
     if (!allowedTerms.includes(selTerm)) {
-        alert('❌ Invalid Term\n\nPayment term must be 1, 3, 6, or 12 months only.');
+        showAlert('❌ Invalid Term\n\nPayment term must be one of the allowed terms based on your account level.');
         return false;
     }
     
-    const interest  = Math.round(selAmount * 0.03 * 100) / 100;
-    const receive   = selAmount - interest;
+    // Show custom confirmation modal
+    showLoanConfirmation();
+    return false; // Prevent form submission, will be handled by modal
+}
+
+function showLoanConfirmation() {
+    const interest = Math.round(selAmount * 0.03 * 100) / 100;
+    const receive = selAmount - interest;
+    const monthly = Math.round((selAmount / selTerm) * 100) / 100;
     
-    return confirm(`✅ Loan Application Summary\n\nLoan Amount: ${fmt(selAmount)}\nPayment Term: ${selTerm} month(s)\nInterest (3%): ${fmt(interest)}\nYou Receive: ${fmt(receive)}\nMonthly Payment: ${fmt(Math.round((selAmount / selTerm) * 100) / 100)}\n\nProceed with application?`);
+    // Update modal content
+    document.getElementById('confirmAmount').textContent = fmt(selAmount);
+    document.getElementById('confirmTerm').textContent = selTerm + ' month' + (selTerm > 1 ? 's' : '');
+    document.getElementById('confirmInterest').textContent = fmt(interest);
+    document.getElementById('confirmReceive').textContent = fmt(receive);
+    document.getElementById('confirmMonthly').textContent = fmt(monthly);
+    
+    // Show modal
+    document.getElementById('loanConfirmModal').style.display = 'flex';
+}
+
+function confirmLoanApplication() {
+    // Hide modal
+    document.getElementById('loanConfirmModal').style.display = 'none';
+    
+    // Submit form
+    document.getElementById('loanForm').submit();
+}
+
+function cancelLoanApplication() {
+    // Hide modal
+    document.getElementById('loanConfirmModal').style.display = 'none';
+}
+
+function showAlert(message) {
+    // Update modal content
+    document.getElementById('alertMessage').textContent = message;
+    
+    // Show modal
+    document.getElementById('alertModal').style.display = 'flex';
+}
+
+function closeAlert() {
+    document.getElementById('alertModal').style.display = 'none';
 }
 </script>
+
+<!-- Loan Confirmation Modal -->
+<div id="loanConfirmModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="bi bi-check-circle-fill"></i>
+                Loan Application Summary
+            </h3>
+        </div>
+        <div class="modal-body">
+            <div class="loan-summary">
+                <div class="summary-row">
+                    <span class="summary-label">Loan Amount</span>
+                    <span class="summary-value" id="confirmAmount">—</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Payment Term</span>
+                    <span class="summary-value" id="confirmTerm">—</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Interest (3%)</span>
+                    <span class="summary-value interest" id="confirmInterest">—</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">You Receive</span>
+                    <span class="summary-value gold" id="confirmReceive">—</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Monthly Payment</span>
+                    <span class="summary-value gold" id="confirmMonthly">—</span>
+                </div>
+            </div>
+            <div class="proceed-message">
+                Proceed with application?
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="modal-btn modal-btn-cancel" onclick="cancelLoanApplication()">
+                Cancel
+            </button>
+            <button type="button" class="modal-btn modal-btn-confirm" onclick="confirmLoanApplication()">
+                Confirm Application
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Alert Modal -->
+<div id="alertModal" class="modal-overlay alert-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">
+                <i class="bi bi-exclamation-triangle-fill"></i>
+                Notice
+            </h3>
+        </div>
+        <div class="modal-body">
+            <div id="alertMessage" style="white-space: pre-line; font-size: 14px; line-height: 1.5;"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="modal-btn" onclick="closeAlert()">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

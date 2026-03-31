@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ' . APP_URL . '/admin/billing/index.php'); exit;
 }
 
-$bill_id = (int)($_POST['bill_id'] ?? 0);
+$bill_id = (int)($_POST['id'] ?? 0);
 if (!$bill_id) { setFlash('danger','Invalid billing record.'); header('Location: ' . APP_URL . '/admin/billing/index.php'); exit; }
 
 // Fetch bill

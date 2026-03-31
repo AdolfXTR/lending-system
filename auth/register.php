@@ -2,9 +2,6 @@
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../helpers.php';
 
-session_destroy();
-session_start();
-
 if (isLoggedIn()) { header('Location: ' . APP_URL . '/user/dashboard.php'); exit; }
 if (isAdmin())    { header('Location: ' . APP_URL . '/admin/dashboard.php'); exit; }
 
@@ -152,6 +149,143 @@ body {
 }
 .login-cta a { color: #1a45a8; font-weight: 700; text-decoration: none; }
 .login-cta a:hover { text-decoration: underline; }
+
+/* Progress Bar */
+.progress-steps {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-bottom: 32px;
+}
+.step {
+    display: flex; align-items: center; gap: 8px;
+}
+.step-number {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #e5e7eb; color: #6b7280;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+    transition: all 0.3s;
+}
+.step.active .step-number {
+    background: #1a45a8; color: #fff;
+}
+.step.completed .step-number {
+    background: #16a34a; color: #fff;
+}
+.step-label {
+    font-size: 12px; font-weight: 600; color: #6b7280;
+    display: none;
+}
+@media (min-width: 768px) {
+    .step-label { display: block; }
+}
+.step.active .step-label {
+    color: #1a45a8;
+}
+.step-line {
+    width: 30px; height: 2px; background: #e5e7eb;
+}
+@media (min-width: 768px) {
+    .step-line { width: 60px; }
+}
+.step.completed + .step-line {
+    background: #16a34a;
+}
+
+/* Multi-step form */
+.reg-section {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+.reg-section.active {
+    display: block;
+}
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* File upload preview */
+.file-preview {
+    margin-top: 10px;
+    border: 2px dashed #e5e7eb;
+    border-radius: 8px;
+    padding: 10px;
+    text-align: center;
+    min-height: 100px;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+}
+.file-preview img {
+    max-height: 150px;
+    max-width: 100%;
+    border-radius: 6px;
+}
+.file-preview .file-icon {
+    font-size: 40px;
+    color: #9ca3af;
+}
+.file-preview .file-name {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 5px;
+}
+
+/* Terms checkbox */
+.terms-box {
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 20px 0;
+}
+.terms-box .form-check-input {
+    width: 20px; height: 20px;
+    margin-top: 0;
+}
+.terms-box .form-check-label {
+    font-size: 14px;
+    color: #374151;
+    margin-left: 8px;
+}
+
+/* Navigation buttons */
+.btn-nav {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.btn-nav-prev {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+.btn-nav-prev:hover {
+    background: #e5e7eb;
+}
+.btn-nav-next {
+    background: #1a45a8;
+    color: #fff;
+}
+.btn-nav-next:hover {
+    background: #153a8a;
+}
+.nav-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 24px;
+}
+
+/* Submit note */
+.submit-note {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 12px;
+    color: #6b7280;
+}
 </style>
 </head>
 <body>
@@ -185,10 +319,33 @@ body {
     </div>
     <?php endif; ?>
 
-    <form method="POST" action="<?= APP_URL ?>/auth/register_process.php" enctype="multipart/form-data">
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+        <div class="step active" id="step1-indicator">
+            <div class="step-number">1</div>
+            <span class="step-label">Account</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" id="step2-indicator">
+            <div class="step-number">2</div>
+            <span class="step-label">Personal</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" id="step3-indicator">
+            <div class="step-number">3</div>
+            <span class="step-label">Bank & Work</span>
+        </div>
+        <div class="step-line"></div>
+        <div class="step" id="step4-indicator">
+            <div class="step-number">4</div>
+            <span class="step-label">Documents</span>
+        </div>
+    </div>
+
+    <form method="POST" action="<?= APP_URL ?>/auth/register_process.php" enctype="multipart/form-data" id="regForm">
 
         <!-- Account Info -->
-        <div class="reg-section">
+        <div class="reg-section active" id="step1">
             <div class="reg-section-head">
                 <span class="sec-dot" style="background:#1a45a8;"></span>
                 <h6 class="reg-section-title">Account Information</h6>
@@ -223,11 +380,17 @@ body {
                         </div>
                     </div>
                 </div>
+                <div class="nav-buttons">
+                    <div></div>
+                    <button type="button" class="btn-nav btn-nav-next" onclick="nextStep(2)">
+                        Next <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Personal Info -->
-        <div class="reg-section">
+        <div class="reg-section" id="step2">
             <div class="reg-section-head">
                 <span class="sec-dot" style="background:#16a34a;"></span>
                 <h6 class="reg-section-title">Personal Information</h6>
@@ -287,21 +450,31 @@ body {
                         <div class="form-text">Philippine mobile number format only.</div>
                     </div>
                 </div>
+                <div class="nav-buttons">
+                    <button type="button" class="btn-nav btn-nav-prev" onclick="prevStep(1)">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button type="button" class="btn-nav btn-nav-next" onclick="nextStep(3)">
+                        Next <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Bank Details -->
-        <div class="reg-section">
+        <!-- Step 3: Bank & Employment Combined -->
+        <div class="reg-section" id="step3">
             <div class="reg-section-head">
                 <span class="sec-dot" style="background:#f5c842;"></span>
-                <h6 class="reg-section-title">Bank Details</h6>
+                <h6 class="reg-section-title">Bank & Employment Details</h6>
             </div>
             <div class="reg-section-body">
-                <div class="reg-note">
+                <!-- Bank Section -->
+                <p class="fw-semibold text-muted small mb-2">BANK INFORMATION</p>
+                <div class="reg-note mb-3">
                     <i class="bi bi-exclamation-triangle-fill" style="flex-shrink:0;margin-top:1px;"></i>
                     <span><strong>Important:</strong> Make sure your card holder's name is <strong>exactly correct</strong> as it appears on your card to avoid transaction interruptions.</span>
                 </div>
-                <div class="row g-3">
+                <div class="row g-3 mb-4">
                     <div class="col-md-4">
                         <label class="form-label">Bank Name <span class="text-danger">*</span></label>
                         <input type="text" name="bank_name" class="form-control" required
@@ -319,16 +492,9 @@ body {
                             value="<?= clean($old['card_holder_name'] ?? '') ?>">
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Employment -->
-        <div class="reg-section">
-            <div class="reg-section-head">
-                <span class="sec-dot" style="background:#7c3aed;"></span>
-                <h6 class="reg-section-title">Employment Details</h6>
-            </div>
-            <div class="reg-section-body">
+                <!-- Employment Section -->
+                <p class="fw-semibold text-muted small mb-2">EMPLOYMENT INFORMATION</p>
                 <div class="mb-3">
                     <label class="form-label">TIN Number <span class="text-danger">*</span></label>
                     <input type="text" name="tin_number" class="form-control" required
@@ -352,7 +518,7 @@ body {
                     <label class="form-label">Company Address <span class="text-danger">*</span></label>
                     <textarea name="company_address" class="form-control" rows="2" required><?= clean($old['company_address'] ?? '') ?></textarea>
                 </div>
-                <div class="row g-3">
+                <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label">Position <span class="text-danger">*</span></label>
                         <input type="text" name="position" class="form-control" required
@@ -368,11 +534,19 @@ body {
                         </div>
                     </div>
                 </div>
+                <div class="nav-buttons">
+                    <button type="button" class="btn-nav btn-nav-prev" onclick="prevStep(2)">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button type="button" class="btn-nav btn-nav-next" onclick="nextStep(4)">
+                        Next <i class="bi bi-arrow-right"></i>
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Uploads -->
-        <div class="reg-section">
+        <!-- Step 4: Document Uploads -->
+        <div class="reg-section" id="step4">
             <div class="reg-section-head">
                 <span class="sec-dot" style="background:#dc2626;"></span>
                 <h6 class="reg-section-title">Document Uploads</h6>
@@ -385,24 +559,53 @@ body {
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Proof of Billing <span class="text-danger">*</span></label>
-                        <input type="file" name="proof_of_billing" class="form-control" required accept=".jpg,.jpeg,.png,.pdf">
+                        <input type="file" name="proof_of_billing" id="file-pob" class="form-control" required accept=".jpg,.jpeg,.png,.pdf" onchange="previewFile(this, 'preview-pob')">
+                        <div id="preview-pob" class="file-preview">
+                            <i class="bi bi-image file-icon"></i>
+                            <span class="file-name">No file selected</span>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Valid ID (Primary) <span class="text-danger">*</span></label>
-                        <input type="file" name="valid_id" class="form-control" required accept=".jpg,.jpeg,.png,.pdf">
+                        <input type="file" name="valid_id" id="file-id" class="form-control" required accept=".jpg,.jpeg,.png,.pdf" onchange="previewFile(this, 'preview-id')">
+                        <div id="preview-id" class="file-preview">
+                            <i class="bi bi-image file-icon"></i>
+                            <span class="file-name">No file selected</span>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">COE (Certificate of Employment) <span class="text-danger">*</span></label>
-                        <input type="file" name="coe" class="form-control" required accept=".jpg,.jpeg,.png,.pdf">
+                        <input type="file" name="coe" id="file-coe" class="form-control" required accept=".jpg,.jpeg,.png,.pdf" onchange="previewFile(this, 'preview-coe')">
+                        <div id="preview-coe" class="file-preview">
+                            <i class="bi bi-image file-icon"></i>
+                            <span class="file-name">No file selected</span>
+                        </div>
                     </div>
                 </div>
+
+                <!-- Terms Checkbox -->
+                <div class="terms-box">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="termsCheck" required>
+                        <label class="form-check-label" for="termsCheck">
+                            I confirm that all information provided is accurate and complete
+                        </label>
+                    </div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button type="button" class="btn-nav btn-nav-prev" onclick="prevStep(3)">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </button>
+                    <button type="submit" class="btn-submit" id="submitBtn">
+                        <i class="bi bi-send"></i> Submit Application
+                    </button>
+                </div>
+                <p class="submit-note">
+                    <i class="bi bi-clock"></i> Your application will be reviewed by an admin within 1-3 business days
+                </p>
             </div>
         </div>
-
-        <!-- Submit -->
-        <button type="submit" class="btn-submit">
-            <i class="bi bi-send"></i> Submit Application
-        </button>
 
     </form>
 
@@ -438,6 +641,88 @@ function checkPassword(val) {
         const el = document.getElementById(id);
         el.classList.toggle('met', met);
         el.querySelector('i').className = met ? 'bi bi-check-circle-fill' : 'bi bi-circle';
+    }
+}
+
+// Multi-step navigation
+let currentStep = 1;
+const totalSteps = 4;
+
+function nextStep(step) {
+    // Validate current step before moving
+    const currentSection = document.getElementById('step' + currentStep);
+    const requiredFields = currentSection.querySelectorAll('[required]');
+    let valid = true;
+    
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            valid = false;
+            field.classList.add('is-invalid');
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!valid) {
+        alert('Please fill in all required fields before proceeding.');
+        return;
+    }
+    
+    // Hide current step
+    document.getElementById('step' + currentStep).classList.remove('active');
+    document.getElementById('step' + currentStep + '-indicator').classList.remove('active');
+    document.getElementById('step' + currentStep + '-indicator').classList.add('completed');
+    
+    // Show next step
+    currentStep = step;
+    document.getElementById('step' + currentStep).classList.add('active');
+    document.getElementById('step' + currentStep + '-indicator').classList.add('active');
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prevStep(step) {
+    // Hide current step
+    document.getElementById('step' + currentStep).classList.remove('active');
+    document.getElementById('step' + currentStep + '-indicator').classList.remove('active');
+    
+    // Show previous step
+    currentStep = step;
+    document.getElementById('step' + currentStep).classList.add('active');
+    document.getElementById('step' + currentStep + '-indicator').classList.add('active');
+    document.getElementById('step' + currentStep + '-indicator').classList.remove('completed');
+    
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// File preview function
+function previewFile(input, previewId) {
+    const preview = document.getElementById(previewId);
+    const file = input.files[0];
+    
+    if (file) {
+        const fileName = file.name;
+        const fileExt = fileName.split('.').pop().toLowerCase();
+        
+        if (['jpg', 'jpeg', 'png'].includes(fileExt)) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            };
+            reader.readAsDataURL(file);
+        } else if (fileExt === 'pdf') {
+            preview.innerHTML = `
+                <i class="bi bi-file-earmark-pdf file-icon" style="color: #dc2626;"></i>
+                <span class="file-name">${fileName}</span>
+            `;
+        } else {
+            preview.innerHTML = `
+                <i class="bi bi-file-earmark file-icon"></i>
+                <span class="file-name">${fileName}</span>
+            `;
+        }
     }
 }
 </script>

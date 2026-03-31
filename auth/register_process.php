@@ -138,31 +138,41 @@ $stmt = $pdo->prepare("
     )
 ");
 
-$stmt->execute([
-    ':username'            => $old['username'],
-    ':password'            => $hashedPwd,
-    ':account_type'        => $old['account_type'],
-    ':first_name'          => $old['first_name'],
-    ':last_name'           => $old['last_name'],
-    ':address'             => $old['address'],
-    ':gender'              => $old['gender'] ?: null,
-    ':birthday'            => $old['birthday'],
-    ':age'                 => $old['age'],
-    ':email'               => $old['email'],
-    ':contact_number'      => $old['contact_number'],
-    ':bank_name'           => $old['bank_name'],
-    ':bank_account_number' => $old['bank_account_number'],
-    ':card_holder_name'    => $old['card_holder_name'],
-    ':tin_number'          => $old['tin_number'],
-    ':company_name'        => $old['company_name'],
-    ':company_address'     => $old['company_address'],
-    ':company_phone'       => $old['company_phone'],
-    ':position'            => $old['position'],
-    ':monthly_earnings'    => $old['monthly_earnings'],
-    ':proof_of_billing'    => $uploadedPaths['proof_of_billing'],
-    ':valid_id'            => $uploadedPaths['valid_id'],
-    ':coe'                 => $uploadedPaths['coe'],
-]);
+try {
+    $stmt->execute([
+        ':username'            => $old['username'],
+        ':password'            => $hashedPwd,
+        ':account_type'        => $old['account_type'],
+        ':first_name'          => $old['first_name'],
+        ':last_name'           => $old['last_name'],
+        ':address'             => $old['address'],
+        ':gender'              => $old['gender'] ?: null,
+        ':birthday'            => $old['birthday'],
+        ':age'                 => $old['age'],
+        ':email'               => $old['email'],
+        ':contact_number'      => $old['contact_number'],
+        ':bank_name'           => $old['bank_name'],
+        ':bank_account_number' => $old['bank_account_number'],
+        ':card_holder_name'    => $old['card_holder_name'],
+        ':tin_number'          => $old['tin_number'],
+        ':company_name'        => $old['company_name'],
+        ':company_address'     => $old['company_address'],
+        ':company_phone'       => $old['company_phone'],
+        ':position'            => $old['position'],
+        ':monthly_earnings'    => $old['monthly_earnings'],
+        ':proof_of_billing'    => $uploadedPaths['proof_of_billing'],
+        ':valid_id'            => $uploadedPaths['valid_id'],
+        ':coe'                 => $uploadedPaths['coe'],
+    ]);
+    error_log("Registration: SUCCESS - User {$old['username']} registered");
+} catch (Exception $e) {
+    error_log("Registration ERROR: " . $e->getMessage());
+    $errors[] = "Database error: " . $e->getMessage();
+    $_SESSION['register_errors'] = $errors;
+    $_SESSION['register_old']    = $old;
+    header('Location: ' . APP_URL . '/auth/register.php');
+    exit;
+}
 
 // Store name for success page
 $_SESSION['reg_success_name'] = $old['first_name'];

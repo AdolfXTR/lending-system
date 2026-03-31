@@ -73,236 +73,529 @@ $pageTitle = 'Dashboard';
 require_once __DIR__ . '/../includes/admin_header.php';
 ?>
 
+<!-- Modern Admin Dashboard Styles -->
 <style>
-.adm-welcome { margin-bottom: 22px; }
-.adm-welcome h1 { font-size: 24px; font-weight: 700; color: #0f2557; margin: 0 0 4px; }
-.adm-welcome h1 span { color: #1a45a8; }
-.adm-welcome p { font-size: 13px; color: #6b7280; margin: 0; }
-.main-grid-admin { display: grid; grid-template-columns: 1fr 300px; gap: 18px; }
-@media(max-width:900px){ .main-grid-admin { grid-template-columns: 1fr; } }
-.chart-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-bottom: 18px; }
-@media(max-width:900px){ .chart-grid { grid-template-columns: 1fr; } }
-.chart-card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.06); min-height: 220px; }
-.chart-card canvas { min-height: 180px; max-height: 200px; }
-.chart-card-title { font-size: 13px; font-weight: 700; color: #0f2557; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-
-.admin-stat {
-    background: #fff;
-    border-radius: 14px;
-    padding: 20px;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-    transition: transform 0.15s, box-shadow 0.15s;
-    border-top: 4px solid transparent;
+.admin-hero {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    border-radius: 24px;
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 20px 25px -5px rgba(30, 41, 59, 0.15);
 }
-.admin-stat:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.09);
-}
-.admin-stat.c-blue .as-value   { color: #1a45a8; }
-.admin-stat.c-green .as-value  { color: #16a34a; }
-.admin-stat.c-orange .as-value { color: #ea7c0a; }
-.admin-stat.c-gold .as-value   { color: #f59e0b; }
-.admin-stat.c-purple .as-value { color: #7c3aed; }
-.admin-stat.c-red .as-value    { color: #dc2626; }
-.admin-stat.c-blue   { border-top-color: #1a45a8; }
-.admin-stat.c-orange { border-top-color: #ea7c0a; }
-.admin-stat.c-green  { border-top-color: #16a34a; }
-.admin-stat.c-red    { border-top-color: #dc2626; }
-.admin-stat.c-gold   { border-top-color: #f59e0b; }
-.admin-stat.c-purple { border-top-color: #7c3aed; }
 
-.as-icon {
-    font-size: 22px;
-    margin-bottom: 10px;
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
+.admin-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+}
+
+.admin-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -5%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 50%;
+}
+
+.hero-title {
+    color: #ffffff;
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+.hero-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 16px;
+    margin-bottom: 24px;
+    position: relative;
+    z-index: 1;
+}
+
+.admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.admin-stat-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.admin-stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.admin-stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.admin-stat-card.primary::before { background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%); }
+.admin-stat-card.warning::before { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
+.admin-stat-card.success::before { background: linear-gradient(90deg, #10b981 0%, #059669 100%); }
+.admin-stat-card.danger::before { background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); }
+.admin-stat-card.gold::before { background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%); }
+.admin-stat-card.purple::before { background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%); }
+
+.stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 24px;
+    margin-bottom: 16px;
+    position: relative;
 }
-.admin-stat.c-blue .as-icon   { background: #e0e7ff; }
-.admin-stat.c-orange .as-icon { background: #fff3e0; }
-.admin-stat.c-green .as-icon  { background: #e8f5e9; }
-.admin-stat.c-red .as-icon    { background: #fde8e8; }
-.admin-stat.c-gold .as-icon   { background: #fffde7; }
-.admin-stat.c-purple .as-icon { background: #f3e5f5; }
 
-.admin-table tbody tr:hover { background: #f8fafc; transition: background 0.2s; }
+.admin-stat-card.primary .stat-icon { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); }
+.admin-stat-card.warning .stat-icon { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); }
+.admin-stat-card.success .stat-icon { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); }
+.admin-stat-card.danger .stat-icon { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); }
+.admin-stat-card.gold .stat-icon { background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%); }
+.admin-stat-card.purple .stat-icon { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); }
+
+.stat-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat-value {
+    font-size: 36px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.admin-stat-card.primary .stat-value { color: #1d4ed8; }
+.admin-stat-card.warning .stat-value { color: #d97706; }
+.admin-stat-card.success .stat-value { color: #059669; }
+.admin-stat-card.danger .stat-value { color: #dc2626; }
+.admin-stat-card.gold .stat-value { color: #d97706; }
+.admin-stat-card.purple .stat-value { color: #7c3aed; }
+
+.stat-subtitle {
+    font-size: 13px;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+.stat-link {
+    color: inherit;
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.stat-link:hover {
+    color: #1d4ed8;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.chart-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.chart-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.full-width-chart {
+    grid-column: 1 / -1;
+}
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 24px;
+}
+
+.admin-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.admin-card-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 20px 24px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.admin-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1e293b;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-table {
+    width: 100%;
+    margin: 0;
+}
+
+.admin-table thead th {
+    background: #f8fafc;
+    color: #374151;
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 16px 20px;
+    text-align: left;
+    border: none;
+}
+
+.admin-table tbody td {
+    padding: 16px 20px;
+    vertical-align: middle;
+    border-top: 1px solid #f1f5f9;
+    font-size: 14px;
+}
+
+.admin-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.badge-admin {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-pending { background: #fef3c7; color: #92400e; }
+.badge-approved { background: #dbeafe; color: #1e40af; }
+.badge-active { background: #d1fae5; color: #065f46; }
+.badge-rejected { background: #fee2e2; color: #991b1b; }
+.badge-completed { background: #e5e7eb; color: #374151; }
+
+.btn-admin {
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-primary-admin {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.btn-primary-admin:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-outline-admin {
+    background: transparent;
+    color: #6b7280;
+    border: 2px solid #e2e8f0;
+}
+
+.btn-outline-admin:hover {
+    background: #f8fafc;
+    color: #374151;
+    border-color: #d1d5db;
+    transform: translateY(-1px);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 48px 20px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+}
+
+.empty-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 4px;
+}
+
+@media (max-width: 1024px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .admin-stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .admin-hero {
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .hero-title {
+        font-size: 24px;
+    }
+    
+    .stat-value {
+        font-size: 28px;
+    }
+    
+    .admin-stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
 </style>
 
-<!-- Welcome -->
-<div class="adm-welcome">
-    <h1>Admin <span>Dashboard</span> 🛡️</h1>
-    <p><?= date('l, F j, Y') ?> &nbsp;·&nbsp; Lending System Control Panel</p>
+<!-- Hero Section -->
+<div class="admin-hero">
+    <h1 class="hero-title">🛡️ Admin Dashboard</h1>
+    <p class="hero-subtitle"><?= date('l, F j, Y') ?> · Lending System Control Panel</p>
 </div>
 
-<!-- Stat Cards Row 1 -->
-<div class="admin-stat-grid">
-    <div class="admin-stat c-blue">
-        <div class="as-icon">👥</div>
-        <div class="as-label">Total Users</div>
-        <div class="as-value"><?= $totalUsers ?></div>
-        <div class="as-sub"><?= $activeUsers ?> active · <?= $premiumUsers ?> premium</div>
+<!-- Stats Cards -->
+<div class="admin-stats-grid">
+    <div class="admin-stat-card primary">
+        <div class="stat-icon">👥</div>
+        <div class="stat-label">Total Users</div>
+        <div class="stat-value"><?= $totalUsers ?></div>
+        <div class="stat-subtitle"><?= $activeUsers ?> active · <?= $premiumUsers ?> premium</div>
     </div>
-    <div class="admin-stat c-orange">
-        <div class="as-icon">⏳</div>
-        <div class="as-label">Pending Registrations</div>
-        <div class="as-value"><?= $pendingRegs ?></div>
-        <div class="as-sub"><a href="<?= APP_URL ?>/admin/registrations/index.php" style="color:inherit;font-weight:700;">Review now →</a></div>
+    
+    <div class="admin-stat-card warning">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-label">Pending Registrations</div>
+        <div class="stat-value"><?= $pendingRegs ?></div>
+        <div class="stat-subtitle"><a href="<?= APP_URL ?>/admin/registrations/index.php" class="stat-link">Review now →</a></div>
     </div>
-    <div class="admin-stat c-green">
-        <div class="as-icon">💳</div>
-        <div class="as-label">Active Loans</div>
-        <div class="as-value"><?= $activeLoans ?></div>
-        <div class="as-sub"><?= $pendingLoans ?> pending approval</div>
+    
+    <div class="admin-stat-card success">
+        <div class="stat-icon">💳</div>
+        <div class="stat-label">Active Loans</div>
+        <div class="stat-value"><?= $activeLoans ?></div>
+        <div class="stat-subtitle"><?= $pendingLoans ?> pending approval</div>
     </div>
-    <div class="admin-stat c-red">
-        <div class="as-icon">⚠️</div>
-        <div class="as-label">Overdue Bills</div>
-        <div class="as-value"><?= $overdueLoans ?></div>
-        <div class="as-sub"><a href="<?= APP_URL ?>/admin/billing/index.php" style="color:inherit;font-weight:700;">View billing →</a></div>
+    
+    <div class="admin-stat-card danger">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-label">Overdue Bills</div>
+        <div class="stat-value"><?= $overdueLoans ?></div>
+        <div class="stat-subtitle"><a href="<?= APP_URL ?>/admin/billing/index.php" class="stat-link">View billing →</a></div>
     </div>
-</div>
-
-<!-- Stat Cards Row 2 -->
-<div class="admin-stat-grid" style="margin-top:-8px;">
-    <div class="admin-stat c-gold">
-        <div class="as-icon">🏦</div>
-        <div class="as-label">Total Savings</div>
-        <div class="as-value" style="font-size:20px;"><?= formatMoney($totalSavings) ?></div>
-        <div class="as-sub">Across all Premium members</div>
+    
+    <div class="admin-stat-card gold">
+        <div class="stat-icon">🏦</div>
+        <div class="stat-label">Total Savings</div>
+        <div class="stat-value" style="font-size: 28px;"><?= formatMoney($totalSavings) ?></div>
+        <div class="stat-subtitle">Across all Premium members</div>
     </div>
-    <div class="admin-stat c-purple">
-        <div class="as-icon">📊</div>
-        <div class="as-label">Company Income</div>
-        <div class="as-value" style="font-size:20px;"><?= formatMoney($totalIncome) ?></div>
-        <div class="as-sub"><a href="<?= APP_URL ?>/admin/money_back.php" style="color:inherit;font-weight:700;">Manage money back →</a></div>
-    </div>
-    <div class="admin-stat c-blue">
-        <div class="as-icon">📋</div>
-        <div class="as-label">Total Loans</div>
-        <div class="as-value"><?= $totalLoans ?></div>
-        <div class="as-sub"><a href="<?= APP_URL ?>/admin/loans/index.php" style="color:inherit;font-weight:700;">View all →</a></div>
-    </div>
-    <div class="admin-stat c-green">
-        <div class="as-icon">⭐</div>
-        <div class="as-label">Premium Members</div>
-        <div class="as-value"><?= $premiumUsers ?></div>
-        <div class="as-sub">of <?= PREMIUM_MAX_SLOTS ?> max slots</div>
+    
+    <div class="admin-stat-card purple">
+        <div class="stat-icon">📊</div>
+        <div class="stat-label">Company Income</div>
+        <div class="stat-value" style="font-size: 28px;"><?= formatMoney($totalIncome) ?></div>
+        <div class="stat-subtitle"><a href="<?= APP_URL ?>/admin/money_back.php" class="stat-link">Manage money back →</a></div>
     </div>
 </div>
 
 <!-- Charts -->
-<div class="chart-grid">
-    <div class="chart-card" style="grid-column: span 2;">
-        <div class="chart-card-title"><span>📈</span> Loan Applications — Last 6 Months</div>
-        <canvas id="loansChart"></canvas>
-    </div>
+<div class="charts-grid">
     <div class="chart-card">
-        <div class="chart-card-title"><span>👥</span> Member Breakdown</div>
-        <canvas id="membersChart"></canvas>
-        <div style="display:flex;justify-content:center;gap:16px;margin-top:12px;font-size:12px;">
-            <span style="display:flex;align-items:center;gap:5px;">
-                <span style="width:10px;height:10px;border-radius:50%;background:#1a45a8;display:inline-block;"></span>
+        <div class="chart-title">
+            <span>📈</span> Loan Applications — Last 6 Months
+        </div>
+        <canvas id="loansChart" style="max-height: 250px;"></canvas>
+    </div>
+    
+    <div class="chart-card">
+        <div class="chart-title">
+            <span>👥</span> Member Breakdown
+        </div>
+        <canvas id="membersChart" style="max-height: 200px;"></canvas>
+        <div style="display: flex; justify-content: center; gap: 16px; margin-top: 16px; font-size: 13px;">
+            <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background: #3b82f6; display: inline-block;"></span>
                 Premium (<?= $premiumUsers ?>)
             </span>
-            <span style="display:flex;align-items:center;gap:5px;">
-                <span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>
+            <span style="display: flex; align-items: center; gap: 6px;">
+                <span style="width: 12px; height: 12px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
                 Basic (<?= $basicUsers ?>)
             </span>
         </div>
     </div>
-    <div class="chart-card" style="grid-column: span 3;">
-        <div class="chart-card-title"><span>💰</span> Company Income — Last 6 Months</div>
-        <canvas id="incomeChart"></canvas>
+    
+    <div class="chart-card full-width-chart">
+        <div class="chart-title">
+            <span>💰</span> Company Income — Last 6 Months
+        </div>
+        <canvas id="incomeChart" style="max-height: 250px;"></canvas>
     </div>
 </div>
 
-<!-- Main Grid -->
-<div class="main-grid-admin">
-<div>
-    <?php if ($pendingLoans > 0): ?>
-    <div class="admin-card" style="border-left: 4px solid #ea7c0a;">
-        <div class="admin-card-head">
-            <h6 class="admin-card-title">
-                <span style="width:8px;height:8px;border-radius:50%;background:#ea7c0a;display:inline-block;"></span>
-                ⚡ Pending Loan Approvals
-            </h6>
-            <a href="<?= APP_URL ?>/admin/loans/index.php" class="btn-adm-primary btn-adm-sm">View All</a>
-        </div>
-        <table class="admin-table">
-            <thead>
-                <tr><th>Borrower</th><th>Amount</th><th>Term</th><th>Applied</th><th></th></tr>
-            </thead>
-            <tbody>
-                <?php foreach (array_filter($recentLoans, fn($l) => $l['status']==='Pending') as $l): ?>
-                <tr>
-                    <td><span style="font-weight:600;"><?= clean($l['first_name'].' '.$l['last_name']) ?></span></td>
-                    <td style="font-weight:700;color:#1a45a8;"><?= formatMoney($l['applied_amount']) ?></td>
-                    <td><?= $l['term_months'] ?> mo</td>
-                    <td style="color:#9ca3af;font-size:12px;"><?= date('M d, Y', strtotime($l['created_at'])) ?></td>
-                    <td><a href="<?= APP_URL ?>/admin/loans/view.php?id=<?= $l['id'] ?>" class="btn-adm-primary btn-adm-sm">Review</a></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-    <?php endif; ?>
-
-    <div class="admin-card">
-        <div class="admin-card-head">
-            <h6 class="admin-card-title">
-                <span style="width:8px;height:8px;border-radius:50%;background:#1a45a8;display:inline-block;"></span>
-                Recent Loans
-            </h6>
-            <a href="<?= APP_URL ?>/admin/loans/index.php" style="font-size:12px;color:#1a45a8;text-decoration:none;font-weight:700;">View all →</a>
-        </div>
-        <table class="admin-table">
-            <thead>
-                <tr><th>Borrower</th><th>Amount</th><th>Term</th><th>Status</th><th>Date</th><th></th></tr>
-            </thead>
-            <tbody>
-                <?php if (empty($recentLoans)): ?>
-                    <tr><td colspan="6" class="empty-state" style="padding:36px;"><div class="empty-icon">📭</div><div class="empty-title">No loans yet</div></td></tr>
-                <?php else: ?>
-                    <?php foreach ($recentLoans as $l):
-                        $sc = match($l['status']) {
-                            'Pending'   => 'pending',
-                            'Approved'  => 'approved',
-                            'Active'    => 'active',
-                            'Rejected'  => 'rejected',
-                            'Completed' => 'completed',
-                            default     => 'pending'
-                        };
-                    ?>
+<!-- Main Content Grid -->
+<div class="content-grid">
+    <div>
+        <?php if ($pendingLoans > 0): ?>
+        <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-header" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                <h6 class="admin-card-title" style="color: #92400e;">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                    ⚡ Pending Loan Approvals
+                </h6>
+                <a href="<?= APP_URL ?>/admin/loans/index.php" class="btn-admin btn-primary-admin">View All</a>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr><th>Borrower</th><th>Amount</th><th>Term</th><th>Applied</th><th></th></tr>
+                </thead>
+                <tbody>
+                    <?php foreach (array_filter($recentLoans, fn($l) => $l['status']==='Pending') as $l): ?>
                     <tr>
-                        <td><span style="font-weight:600;"><?= clean($l['first_name'].' '.$l['last_name']) ?></span></td>
-                        <td style="font-weight:700;"><?= formatMoney($l['applied_amount']) ?></td>
+                        <td><span style="font-weight: 600;"><?= clean($l['first_name'].' '.$l['last_name']) ?></span></td>
+                        <td style="font-weight: 700; color: #1d4ed8;"><?= formatMoney($l['applied_amount']) ?></td>
                         <td><?= $l['term_months'] ?> mo</td>
-                        <td><span class="adm-badge <?= $sc ?>"><?= $l['status'] ?></span></td>
-                        <td style="color:#9ca3af;font-size:12px;"><?= date('M d, Y', strtotime($l['created_at'])) ?></td>
-                        <td><a href="<?= APP_URL ?>/admin/loans/view.php?id=<?= $l['id'] ?>" class="btn-adm-outline btn-adm-sm">View</a></td>
+                        <td style="color: #9ca3af; font-size: 13px;"><?= date('M d, Y', strtotime($l['created_at'])) ?></td>
+                        <td><a href="<?= APP_URL ?>/admin/loans/view.php?id=<?= $l['id'] ?>" class="btn-admin btn-primary-admin">Review</a></td>
                     </tr>
                     <?php endforeach; ?>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<!-- Sidebar -->
-<div>
-    <div class="admin-card">
-        <div class="admin-card-head">
-            <h6 class="admin-card-title">
-                <span style="width:8px;height:8px;border-radius:50%;background:#ea7c0a;display:inline-block;"></span>
-                Pending Registrations
-            </h6>
-            <a href="<?= APP_URL ?>/admin/registrations/index.php" style="font-size:12px;color:#1a45a8;text-decoration:none;font-weight:700;">View all →</a>
+                </tbody>
+            </table>
         </div>
-        <div>
-            <?php if (empty($recentRegs)): ?>
+        <?php endif; ?>
+        
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h6 class="admin-card-title">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #3b82f6; display: inline-block;"></span>
+                    Recent Loans
+                </h6>
+                <a href="<?= APP_URL ?>/admin/loans/index.php" style="font-size: 13px; color: #3b82f6; text-decoration: none; font-weight: 700;">View all →</a>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr><th>Borrower</th><th>Amount</th><th>Term</th><th>Status</th><th>Date</th><th></th></tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($recentLoans)): ?>
+                        <tr><td colspan="6" class="empty-state">
+                            <div class="empty-icon">📭</div>
+                            <div class="empty-title">No loans yet</div>
+                        </td></tr>
+                    <?php else: ?>
+                        <?php foreach ($recentLoans as $l):
+                            $badgeClass = match($l['status']) {
+                                'Pending'   => 'pending',
+                                'Approved'  => 'approved',
+                                'Active'    => 'active',
+                                'Rejected'  => 'rejected',
+                                'Completed' => 'completed',
+                                default     => 'pending'
+                            };
+                        ?>
+                        <tr>
+                            <td><span style="font-weight: 600;"><?= clean($l['first_name'].' '.$l['last_name']) ?></span></td>
+                            <td style="font-weight: 700;"><?= formatMoney($l['applied_amount']) ?></td>
+                            <td><?= $l['term_months'] ?> mo</td>
+                            <td><span class="badge-admin badge-<?= $badgeClass ?>"><?= $l['status'] ?></span></td>
+                            <td style="color: #9ca3af; font-size: 13px;"><?= date('M d, Y', strtotime($l['created_at'])) ?></td>
+                            <td><a href="<?= APP_URL ?>/admin/loans/view.php?id=<?= $l['id'] ?>" class="btn-admin btn-outline-admin">View</a></td>
+                        </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div>
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h6 class="admin-card-title">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
+                    Pending Registrations
+                </h6>
+                <a href="<?= APP_URL ?>/admin/registrations/index.php" class="btn-admin btn-primary-admin">Manage</a>
+            </div>
+            <div style="padding: 20px;">
+                <?php if (empty($recentRegs)): ?>
+                    <div style="text-align: center; padding: 32px 0;">
+                        <div style="font-size: 32px; margin-bottom: 8px; opacity: 0.5;">✅</div>
+                        <div style="font-size: 14px; font-weight: 600; color: #374151;">All caught up!</div>
+                        <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">No pending registrations</div>
                 <div class="empty-state" style="padding:28px;">
                     <div class="empty-icon">✅</div>
                     <div class="empty-title">All clear!</div>

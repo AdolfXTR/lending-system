@@ -13,6 +13,7 @@ $error = '';
 if (isset($_GET['err'])) {
     if ($_GET['err'] === 'disabled') $error = 'Your account has been disabled due to unpaid loan(s).';
     if ($_GET['err'] === 'pending')  $error = 'Your account is still pending admin approval. Please wait.';
+    if ($_GET['err'] === 'rejected') $error = 'Your application was rejected. Please contact support.';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -239,6 +240,37 @@ body::after {
 }
 .register-link a:hover { text-decoration: underline; }
 
+.creator-credit {
+    margin-top: 24px;
+    text-align: center;
+}
+
+.credit-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #e5e7eb, transparent);
+    margin-bottom: 16px;
+}
+
+.credit-text {
+    font-size: 12px;
+    color: #9ca3af;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-weight: 500;
+}
+
+.credit-text i {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.credit-text strong {
+    color: #6b7280;
+    font-weight: 600;
+}
+
 @media(max-width: 640px) {
     .login-left { display: none; }
     .login-right { width: 100%; border-radius: 20px; }
@@ -321,6 +353,14 @@ body::after {
         <div class="register-link">
             Don't have an account?
             <a href="<?= APP_URL ?>/auth/register.php">Apply for membership</a>
+        </div>
+        
+        <div class="creator-credit">
+            <div class="credit-divider"></div>
+            <div class="credit-text">
+                <i class="bi bi-code-slash"></i>
+                Created by <strong>France Adolf P. Borja</strong>
+            </div>
         </div>
     </div>
 

@@ -8,7 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     header('Location: ' . APP_URL . '/admin/registrations/index.php'); exit;
 }
 
-$id = (int)($_POST['user_id'] ?? 0);
+$id = (int)($_POST['id'] ?? 0);
 if (!$id) { setFlash('danger','Invalid user.'); header('Location: ' . APP_URL . '/admin/registrations/index.php'); exit; }
 
 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ? AND status = 'Pending' LIMIT 1");
