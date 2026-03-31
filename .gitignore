@@ -11,7 +11,7 @@ uploads/
 user_uploads/
 
 # 🔐 Configuration Files (Contains database credentials)
-config.php
+# Note: config.php is needed for Railway deployment
 .env
 .env.local
 .env.production

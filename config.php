@@ -1,23 +1,20 @@
 <?php
-// ============================================================
-//  config.php — place at root: lending_system/config.php
-// ============================================================
-
 // Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 // ── Database ─────────────────────────────────────────────────
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'lending_system');
-define('DB_USER', 'root');       // default XAMPP username
-define('DB_PASS', '');           // default XAMPP password (empty)
-define('DB_CHARSET', 'utf8mb4');
+define('DB_HOST',     getenv('MYSQLHOST')     ?: 'localhost');
+define('DB_USER',     getenv('MYSQLUSER')     ?: 'root');
+define('DB_PASS',     getenv('MYSQLPASSWORD') ?: '');
+define('DB_NAME',     getenv('MYSQLDATABASE') ?: 'lending_system');
+define('DB_PORT',     getenv('MYSQLPORT')     ?: '3306');
+define('DB_CHARSET',  'utf8mb4');
 
 // ── App Settings ─────────────────────────────────────────────
 define('APP_NAME',    'Lending System');
-define('APP_URL',     'http://localhost/lending_system'); // change if needed
+define('APP_URL',     getenv('APP_URL')       ?: 'http://localhost/lending_system');
 define('APP_VERSION', '1.0.0');
 
 // ── Loan Rules ───────────────────────────────────────────────
@@ -67,4 +64,19 @@ define('MAIL_FROM_NAME', APP_NAME);
 date_default_timezone_set('Asia/Manila');
 
 // ── Load DB connection ────────────────────────────────────────
-require_once __DIR__ . '/db.php';
+try {
+    $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+    $pdo = new PDO($dsn, DB_USER, DB_PASS, [
+        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        PDO::ATTR_EMULATE_PREPARES   => false,
+    ]);
+} catch (PDOException $e) {
+    die("Database connection failed: " . $e->getMessage());
+}
+
+// Ensure uploads directory exists
+if (!file_exists(UPLOAD_PATH)) {
+    mkdir(UPLOAD_PATH, 0755, true);
+}
+?>
