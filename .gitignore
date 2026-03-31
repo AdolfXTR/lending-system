@@ -77,3 +77,10 @@ test_*
 *.p12
 passwords.txt
 secrets.txt
+
+# 🚀 Deployment Files (Platform-specific)
+.railway/
+.vercel/
+.netlify/
+fly.toml
+render.yaml
