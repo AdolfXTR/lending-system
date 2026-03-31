@@ -1,4 +1,3 @@
 <?php
-// Debug Railway PORT
-echo "PORT: " . getenv('PORT');
-echo " | APP running!";
+header('Location: /lending_system/auth/login.php');
+exit();
