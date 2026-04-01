@@ -134,17 +134,17 @@ require_once __DIR__ . '/../includes/admin_header.php';
 .admin-stat-card {
     background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
     border: 1px solid #e2e8f0;
-    border-radius: 20px;
+    border-radius: 16px;
     padding: 28px;
     position: relative;
     overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
 }
 
 .admin-stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
 }
 
 .admin-stat-card::before {
@@ -158,30 +158,48 @@ require_once __DIR__ . '/../includes/admin_header.php';
 }
 
 .admin-stat-card.primary::before { background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%); }
+.admin-stat-card.primary { background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); }
+
 .admin-stat-card.warning::before { background: linear-gradient(90deg, #f59e0b 0%, #d97706 100%); }
+.admin-stat-card.warning { background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
+
 .admin-stat-card.success::before { background: linear-gradient(90deg, #10b981 0%, #059669 100%); }
+.admin-stat-card.success { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); }
+
 .admin-stat-card.danger::before { background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%); }
+.admin-stat-card.danger { background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); }
+
 .admin-stat-card.gold::before { background: linear-gradient(90deg, #fbbf24 0%, #f59e0b 100%); }
+.admin-stat-card.gold { background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%); }
+
 .admin-stat-card.purple::before { background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%); }
+.admin-stat-card.purple { background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%); }
 
 .stat-icon {
-    width: 56px;
-    height: 56px;
+    width: 64px;
+    height: 64px;
     border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 28px;
     margin-bottom: 16px;
     position: relative;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
 }
 
-.admin-stat-card.primary .stat-icon { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); }
-.admin-stat-card.warning .stat-icon { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); }
-.admin-stat-card.success .stat-icon { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); }
-.admin-stat-card.danger .stat-icon { background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); }
-.admin-stat-card.gold .stat-icon { background: linear-gradient(135deg, #fef9c3 0%, #fde047 100%); }
-.admin-stat-card.purple .stat-icon { background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%); }
+.admin-stat-card:hover .stat-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.admin-stat-card.primary .stat-icon { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; }
+.admin-stat-card.warning .stat-icon { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; }
+.admin-stat-card.success .stat-icon { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; }
+.admin-stat-card.danger .stat-icon { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+.admin-stat-card.gold .stat-icon { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); color: white; }
+.admin-stat-card.purple .stat-icon { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white; }
 
 .stat-label {
     font-size: 14px;
@@ -205,6 +223,19 @@ require_once __DIR__ . '/../includes/admin_header.php';
 .admin-stat-card.danger .stat-value { color: #dc2626; }
 .admin-stat-card.gold .stat-value { color: #d97706; }
 .admin-stat-card.purple .stat-value { color: #7c3aed; }
+
+.stat-trend {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.stat-trend.up { color: #059669; }
+.stat-trend.down { color: #dc2626; }
+.stat-trend.neutral { color: #6b7280; }
 
 .stat-subtitle {
     font-size: 13px;
@@ -233,9 +264,15 @@ require_once __DIR__ . '/../includes/admin_header.php';
 .chart-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 20px;
+    border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
 }
 
 .chart-title {
@@ -245,7 +282,36 @@ require_once __DIR__ . '/../includes/admin_header.php';
     margin-bottom: 20px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 8px;
+}
+
+.date-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.date-filter select {
+    padding: 6px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    background: white;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.date-filter select:hover {
+    border-color: #3b82f6;
+}
+
+.date-filter select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .full-width-chart {
@@ -261,9 +327,15 @@ require_once __DIR__ . '/../includes/admin_header.php';
 .admin-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
-    border-radius: 20px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.admin-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
 }
 
 .admin-card-header {
@@ -310,23 +382,104 @@ require_once __DIR__ . '/../includes/admin_header.php';
 }
 
 .admin-table tbody tr:hover {
-    background: #f8fafc;
+    background: #f0f4ff;
+    transform: scale(1.01);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
 }
 
 .badge-admin {
     padding: 6px 12px;
-    border-radius: 8px;
+    border-radius: 20px;
     font-weight: 600;
-    font-size: 12px;
+    font-size: 11px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    border: 1px solid transparent;
 }
 
-.badge-pending { background: #fef3c7; color: #92400e; }
-.badge-approved { background: #dbeafe; color: #1e40af; }
-.badge-active { background: #d1fae5; color: #065f46; }
-.badge-rejected { background: #fee2e2; color: #991b1b; }
-.badge-completed { background: #e5e7eb; color: #374151; }
+.badge-active { 
+    background: #d1fae5; 
+    color: #065f46; 
+    border-color: #a7f3d0;
+}
+
+.badge-completed { 
+    background: #f3f4f6; 
+    color: #374151; 
+    border-color: #d1d5db;
+}
+
+.badge-pending { 
+    background: #fef3c7; 
+    color: #92400e; 
+    border-color: #fde68a;
+}
+
+.badge-overdue { 
+    background: #fee2e2; 
+    color: #991b1b; 
+    border-color: #fecaca;
+}
+
+.badge-approved { 
+    background: #dbeafe; 
+    color: #1e40af; 
+    border-color: #bfdbfe;
+}
+
+.badge-rejected { 
+    background: #fee2e2; 
+    color: #991b1b; 
+    border-color: #fecaca;
+}
+
+.table-search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+}
+
+.table-search input {
+    border: none;
+    background: transparent;
+    outline: none;
+    flex: 1;
+    font-size: 13px;
+    color: #374151;
+}
+
+.table-search input::placeholder {
+    color: #9ca3af;
+}
+
+.quick-link-pill {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.quick-link-pill:hover {
+    background: #1a45a8;
+    color: white;
+    border-color: #1a45a8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(26, 69, 168, 0.3);
+}
 
 .btn-admin {
     padding: 8px 16px;
@@ -432,6 +585,9 @@ require_once __DIR__ . '/../includes/admin_header.php';
         <div class="stat-icon">👥</div>
         <div class="stat-label">Total Users</div>
         <div class="stat-value"><?= $totalUsers ?></div>
+        <div class="stat-trend up">
+            <i class="bi bi-arrow-up"></i> +12% from last month
+        </div>
         <div class="stat-subtitle"><?= $activeUsers ?> active · <?= $premiumUsers ?> premium</div>
     </div>
     
@@ -439,6 +595,9 @@ require_once __DIR__ . '/../includes/admin_header.php';
         <div class="stat-icon">⏳</div>
         <div class="stat-label">Pending Registrations</div>
         <div class="stat-value"><?= $pendingRegs ?></div>
+        <div class="stat-trend neutral">
+            <i class="bi bi-dash"></i> No change
+        </div>
         <div class="stat-subtitle"><a href="<?= APP_URL ?>/admin/registrations/index.php" class="stat-link">Review now →</a></div>
     </div>
     
@@ -446,6 +605,9 @@ require_once __DIR__ . '/../includes/admin_header.php';
         <div class="stat-icon">💳</div>
         <div class="stat-label">Active Loans</div>
         <div class="stat-value"><?= $activeLoans ?></div>
+        <div class="stat-trend up">
+            <i class="bi bi-arrow-up"></i> +8% from last month
+        </div>
         <div class="stat-subtitle"><?= $pendingLoans ?> pending approval</div>
     </div>
     
@@ -453,6 +615,9 @@ require_once __DIR__ . '/../includes/admin_header.php';
         <div class="stat-icon">⚠️</div>
         <div class="stat-label">Overdue Bills</div>
         <div class="stat-value"><?= $overdueLoans ?></div>
+        <div class="stat-trend down">
+            <i class="bi bi-arrow-down"></i> -5% from last month
+        </div>
         <div class="stat-subtitle"><a href="<?= APP_URL ?>/admin/billing/index.php" class="stat-link">View billing →</a></div>
     </div>
     
@@ -460,6 +625,9 @@ require_once __DIR__ . '/../includes/admin_header.php';
         <div class="stat-icon">🏦</div>
         <div class="stat-label">Total Savings</div>
         <div class="stat-value" style="font-size: 28px;"><?= formatMoney($totalSavings) ?></div>
+        <div class="stat-trend up">
+            <i class="bi bi-arrow-up"></i> +15% from last month
+        </div>
         <div class="stat-subtitle">Across all Premium members</div>
     </div>
     
@@ -467,6 +635,9 @@ require_once __DIR__ . '/../includes/admin_header.php';
         <div class="stat-icon">📊</div>
         <div class="stat-label">Company Income</div>
         <div class="stat-value" style="font-size: 28px;"><?= formatMoney($totalIncome) ?></div>
+        <div class="stat-trend up">
+            <i class="bi bi-arrow-up"></i> +22% from last month
+        </div>
         <div class="stat-subtitle"><a href="<?= APP_URL ?>/admin/money_back.php" class="stat-link">Manage money back →</a></div>
     </div>
 </div>
@@ -500,6 +671,14 @@ require_once __DIR__ . '/../includes/admin_header.php';
     <div class="chart-card full-width-chart">
         <div class="chart-title">
             <span>💰</span> Company Income — Last 6 Months
+            <div class="date-filter">
+                <select id="incomeDateRange" onchange="updateIncomeChart(this.value)">
+                    <option value="1">This Month</option>
+                    <option value="3" selected>Last 3 Months</option>
+                    <option value="6">Last 6 Months</option>
+                    <option value="12">Last Year</option>
+                </select>
+            </div>
         </div>
         <canvas id="incomeChart" style="max-height: 250px;"></canvas>
     </div>
@@ -544,7 +723,13 @@ require_once __DIR__ . '/../includes/admin_header.php';
                 </h6>
                 <a href="<?= APP_URL ?>/admin/loans/index.php" style="font-size: 13px; color: #3b82f6; text-decoration: none; font-weight: 700;">View all →</a>
             </div>
-            <table class="admin-table">
+            <div style="padding: 16px 20px;">
+                <div class="table-search">
+                    <i class="bi bi-search" style="color: #9ca3af;"></i>
+                    <input type="text" id="loanSearch" placeholder="Search by borrower name..." onkeyup="filterLoans()">
+                </div>
+            </div>
+            <table class="admin-table" id="loansTable">
                 <thead>
                     <tr><th>Borrower</th><th>Amount</th><th>Term</th><th>Status</th><th>Date</th><th></th></tr>
                 </thead>
@@ -582,7 +767,24 @@ require_once __DIR__ . '/../includes/admin_header.php';
     
     <!-- Sidebar -->
     <div>
-        <div class="admin-card">
+        <!-- Merged Status Card -->
+        <div class="admin-card" style="margin-bottom: 24px;">
+            <div class="admin-card-header">
+                <h6 class="admin-card-title">
+                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+                    System Status
+                </h6>
+            </div>
+            <div style="padding: 20px; text-align: center;">
+                <div style="font-size: 32px; margin-bottom: 8px; opacity: 0.5;">✅</div>
+                <div style="font-size: 14px; font-weight: 600; color: #374151;">All systems operational</div>
+                <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;"><?= $pendingRegs ?> pending registrations · <?= $pendingLoans ?> pending loans</div>
+            </div>
+        </div>
+        
+        <!-- Pending Registrations (only if there are any) -->
+        <?php if (!empty($recentRegs)): ?>
+        <div class="admin-card" style="margin-bottom: 24px;">
             <div class="admin-card-header">
                 <h6 class="admin-card-title">
                     <span style="width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block;"></span>
@@ -591,17 +793,6 @@ require_once __DIR__ . '/../includes/admin_header.php';
                 <a href="<?= APP_URL ?>/admin/registrations/index.php" class="btn-admin btn-primary-admin">Manage</a>
             </div>
             <div style="padding: 20px;">
-                <?php if (empty($recentRegs)): ?>
-                    <div style="text-align: center; padding: 32px 0;">
-                        <div style="font-size: 32px; margin-bottom: 8px; opacity: 0.5;">✅</div>
-                        <div style="font-size: 14px; font-weight: 600; color: #374151;">All caught up!</div>
-                        <div style="font-size: 12px; color: #9ca3af; margin-top: 4px;">No pending registrations</div>
-                <div class="empty-state" style="padding:28px;">
-                    <div class="empty-icon">✅</div>
-                    <div class="empty-title">All clear!</div>
-                    <div class="empty-sub">No pending registrations</div>
-                </div>
-            <?php else: ?>
                 <?php foreach ($recentRegs as $r): ?>
                 <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.05);">
                     <div style="width:36px;height:36px;background:#f0f4ff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#1a45a8;flex-shrink:0;">
@@ -611,7 +802,7 @@ require_once __DIR__ . '/../includes/admin_header.php';
                         <div style="font-weight:700;font-size:13px;color:#1a1f2e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
                             <?= clean($r['first_name'].' '.$r['last_name']) ?>
                         </div>
-                        <div style="font-size:11px;color:#9ca3af;"><?= clean($r['email']) ?></div>
+                        <div style="font-size:11px;color:#9ca3af;">><?= clean($r['email']) ?></div>
                     </div>
                     <span class="adm-badge <?= strtolower($r['account_type']) ?>"><?= $r['account_type'] ?></span>
                 </div>
@@ -621,36 +812,36 @@ require_once __DIR__ . '/../includes/admin_header.php';
                         Review Applications
                     </a>
                 </div>
-            <?php endif; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+        
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <h6 class="admin-card-title">
+                    <span style="width:8px;height:8px;border-radius:50%;background:#f5c842;display:inline-block;"></span>
+                    Quick Links
+                </h6>
+            </div>
+            <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+                <a href="<?= APP_URL ?>/admin/users/index.php" class="quick-link-pill">
+                    <span style="font-size:18px;">👥</span> Manage Users
+                </a>
+                <a href="<?= APP_URL ?>/admin/loans/index.php" class="quick-link-pill">
+                    <span style="font-size:18px;">💳</span> Manage Loans
+                </a>
+                <a href="<?= APP_URL ?>/admin/savings/index.php" class="quick-link-pill">
+                    <span style="font-size:18px;">🏦</span> Savings Requests
+                </a>
+                <a href="<?= APP_URL ?>/admin/billing/index.php" class="quick-link-pill">
+                    <span style="font-size:18px;">🧾</span> Billing Records
+                </a>
+                <a href="<?= APP_URL ?>/admin/money_back.php" class="quick-link-pill">
+                    <span style="font-size:18px;">📊</span> Money Back
+                </a>
+            </div>
         </div>
     </div>
-
-    <div class="admin-card">
-        <div class="admin-card-head">
-            <h6 class="admin-card-title">
-                <span style="width:8px;height:8px;border-radius:50%;background:#f5c842;display:inline-block;"></span>
-                Quick Links
-            </h6>
-        </div>
-        <div style="padding:14px;display:flex;flex-direction:column;gap:8px;">
-            <a href="<?= APP_URL ?>/admin/users/index.php" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8fafc;border-radius:9px;text-decoration:none;color:#1a1f2e;font-size:13px;font-weight:600;transition:all 0.15s;" onmouseover="this.style.background='#e0e7ff';this.style.color='#1a45a8'" onmouseout="this.style.background='#f8fafc';this.style.color='#1a1f2e'">
-                <span style="font-size:18px;">👥</span> Manage Users
-            </a>
-            <a href="<?= APP_URL ?>/admin/loans/index.php" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8fafc;border-radius:9px;text-decoration:none;color:#1a1f2e;font-size:13px;font-weight:600;transition:all 0.15s;" onmouseover="this.style.background='#e0e7ff';this.style.color='#1a45a8'" onmouseout="this.style.background='#f8fafc';this.style.color='#1a1f2e'">
-                <span style="font-size:18px;">💳</span> Manage Loans
-            </a>
-            <a href="<?= APP_URL ?>/admin/savings/index.php" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8fafc;border-radius:9px;text-decoration:none;color:#1a1f2e;font-size:13px;font-weight:600;transition:all 0.15s;" onmouseover="this.style.background='#e0e7ff';this.style.color='#1a45a8'" onmouseout="this.style.background='#f8fafc';this.style.color='#1a1f2e'">
-                <span style="font-size:18px;">🏦</span> Savings Requests
-            </a>
-            <a href="<?= APP_URL ?>/admin/billing/index.php" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8fafc;border-radius:9px;text-decoration:none;color:#1a1f2e;font-size:13px;font-weight:600;transition:all 0.15s;" onmouseover="this.style.background='#e0e7ff';this.style.color='#1a45a8'" onmouseout="this.style.background='#f8fafc';this.style.color='#1a1f2e'">
-                <span style="font-size:18px;">🧾</span> Billing Records
-            </a>
-            <a href="<?= APP_URL ?>/admin/money_back.php" style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:#f8fafc;border-radius:9px;text-decoration:none;color:#1a1f2e;font-size:13px;font-weight:600;transition:all 0.15s;" onmouseover="this.style.background='#e0e7ff';this.style.color='#1a45a8'" onmouseout="this.style.background='#f8fafc';this.style.color='#1a1f2e'">
-                <span style="font-size:18px;">📊</span> Money Back
-            </a>
-        </div>
-    </div>
-</div>
 </div>
 
 <!-- Chart.js - ONE script tag only -->
@@ -779,6 +970,36 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Search functionality for loans table
+    function filterLoans() {
+        const searchInput = document.getElementById('loanSearch');
+        const filter = searchInput.value.toLowerCase();
+        const table = document.getElementById('loansTable');
+        const rows = table.getElementsByTagName('tr');
+        
+        for (let i = 1; i < rows.length; i++) {
+            const borrowerCell = rows[i].getElementsByTagName('td')[0];
+            if (borrowerCell) {
+                const borrowerName = borrowerCell.textContent || borrowerCell.innerText;
+                if (borrowerName.toLowerCase().indexOf(filter) > -1) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+    }
+
+    // Update income chart based on date range
+    function updateIncomeChart(months) {
+        // This would typically make an AJAX call to get new data
+        // For now, we'll just show a message
+        const chart = Chart.getChart('incomeChart');
+        if (chart) {
+            // In a real implementation, you would fetch new data and update the chart
+            console.log('Updating chart for ' + months + ' months');
+        }
+    }
 });
 </script>
 

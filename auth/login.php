@@ -1,6 +1,6 @@
 <?php
 // ============================================================
-//  auth/login.php
+//  auth/login.php - INDUSTRY LEVEL
 // ============================================================
 require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../helpers.php';
@@ -70,7 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Login | <?= APP_NAME ?></title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
 <style>
 * { box-sizing: border-box; }
 body {
@@ -88,6 +88,7 @@ body::before {
     background: rgba(245,200,66,0.06);
     border-radius: 50%;
     pointer-events: none;
+    animation: float 20s ease-in-out infinite;
 }
 body::after {
     content: '';
@@ -96,6 +97,13 @@ body::after {
     background: rgba(245,200,66,0.04);
     border-radius: 50%;
     pointer-events: none;
+    animation: float 15s ease-in-out infinite reverse;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -30px) scale(1.05); }
+    66% { transform: translate(-20px, 20px) scale(0.95); }
 }
 
 .login-wrapper {
@@ -106,6 +114,18 @@ body::after {
     overflow: hidden;
     box-shadow: 0 30px 80px rgba(0,0,0,0.4);
     position: relative; z-index: 1;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Left panel */
@@ -121,6 +141,26 @@ body::after {
     position: absolute; bottom: -20px; right: -20px;
     font-size: 160px; opacity: 0.06;
     line-height: 1;
+}
+.login-left::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(245,200,66,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(245,200,66,0.05) 0%, transparent 40%),
+        radial-gradient(circle at 40% 80%, rgba(245,200,66,0.06) 0%, transparent 45%);
+    animation: shimmer 25s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes shimmer {
+    0% { opacity: 0.3; }
+    50% { opacity: 0.7; }
+    100% { opacity: 0.3; }
 }
 .left-logo {
     display: flex; align-items: center; gap: 12px;
@@ -139,22 +179,102 @@ body::after {
     font-size: 28px; font-weight: 700;
     color: #fff; line-height: 1.3; margin: 0 0 12px;
 }
-.left-tagline h2 span { color: #f5c842; }
 .left-tagline p {
     font-size: 14px; color: rgba(255,255,255,0.6);
     margin: 0 0 28px; line-height: 1.6;
 }
 .left-features { display: flex; flex-direction: column; gap: 10px; }
 .left-feat {
-    display: flex; align-items: center; gap: 10px;
+    display: flex; align-items: flex-start; gap: 12px;
     font-size: 13px; color: rgba(255,255,255,0.75);
+    padding: 4px 0;
+}
+.left-feat strong {
+    display: block;
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 2px;
 }
 .feat-icon {
-    width: 28px; height: 28px;
+    width: 32px; height: 32px;
     background: rgba(245,200,66,0.15);
-    border-radius: 6px;
+    border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 13px; flex-shrink: 0;
+    font-size: 16px; flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* Quick Access Buttons */
+.quick-access {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+.quick-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 600;
+}
+.quick-btn:hover {
+    background: #0f2557;
+    border-color: #0f2557;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15,37,87,0.2);
+}
+.quick-btn i {
+    font-size: 20px;
+}
+
+/* Login Options */
+.login-options {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    font-size: 13px;
+}
+.form-check {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.form-check-input {
+    width: 16px;
+    height: 16px;
+    border: 1.5px solid #d1d5db;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.form-check-input:checked {
+    background-color: #0f2557;
+    border-color: #0f2557;
+}
+.form-check-label {
+    color: #6b7280;
+    font-weight: 500;
+    cursor: pointer;
+}
+.forgot-link {
+    color: #1a45a8;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 13px;
+}
+.forgot-link:hover {
+    text-decoration: underline;
+    color: #0f2557;
 }
 
 /* Right panel */
@@ -192,12 +312,13 @@ body::after {
     border: 1.5px solid rgba(0,0,0,0.1);
     border-radius: 9px; font-family: inherit;
     font-size: 14px; color: #1a1f2e;
-    outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+    outline: none; transition: all 0.3s ease;
     background: #fff;
 }
 .login-input:focus {
     border-color: #1a45a8;
-    box-shadow: 0 0 0 3px rgba(26,69,168,0.1);
+    box-shadow: 0 0 0 3px rgba(26,69,168,0.1), 0 0 15px rgba(26,69,168,0.2);
+    transform: translateY(-1px);
 }
 .eye-btn {
     position: absolute; right: 12px; top: 50%;
@@ -213,6 +334,7 @@ body::after {
     border-radius: 9px; padding: 11px 14px;
     font-size: 13px; margin-bottom: 20px;
     display: flex; align-items: flex-start; gap: 8px;
+    animation: slideDown 0.3s ease-out;
 }
 .login-info {
     background: #fef3c7; color: #92400e;
@@ -220,6 +342,38 @@ body::after {
     border-radius: 9px; padding: 11px 14px;
     font-size: 13px; margin-bottom: 20px;
     display: flex; align-items: flex-start; gap: 8px;
+    animation: slideDown 0.3s ease-out;
+}
+.login-success {
+    background: #dcfce7; color: #15803d;
+    border: 1px solid #bbf7d0;
+    border-radius: 9px; padding: 11px 14px;
+    font-size: 13px; margin-bottom: 20px;
+    display: flex; align-items: flex-start; gap: 8px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 100px;
+    }
+}
+
+.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
 }
 .btn-login {
     width: 100%; background: #0f2557; color: #f5c842;
@@ -227,10 +381,40 @@ body::after {
     padding: 13px; font-size: 15px; font-weight: 700;
     font-family: inherit; cursor: pointer;
     display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: background 0.15s; margin-top: 6px;
+    transition: all 0.3s ease; margin-top: 6px;
+    position: relative;
+    overflow: hidden;
 }
 .btn-login:hover { background: #1a3a7a; }
 .btn-login:active { transform: scale(0.99); }
+.btn-login.loading {
+    pointer-events: none;
+    opacity: 0.8;
+    background: linear-gradient(45deg, #0f2557, #1a3a7a);
+    background-size: 200% 200%;
+    animation: gradientShift 2s ease infinite;
+}
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+.btn-login.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid #f5c842;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 8px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
 .register-link {
     text-align: center; margin-top: 20px;
     font-size: 13px; color: #9ca3af;
@@ -295,19 +479,31 @@ body::after {
             <div class="left-features">
                 <div class="left-feat">
                     <div class="feat-icon">💳</div>
-                    Loan from ₱5,000 up to ₱10,000 initial — max ₱50,000
+                    <div>
+                        <strong>Quick Loans</strong><br>
+                        <span style="font-size:12px;opacity:0.8;">₱5,000 to ₱50,000 available</span>
+                    </div>
                 </div>
                 <div class="left-feat">
                     <div class="feat-icon">🏦</div>
-                    Premium members: savings account up to ₱100,000
+                    <div>
+                        <strong>Premium Savings</strong><br>
+                        <span style="font-size:12px;opacity:0.8;">Up to ₱100,000 savings account</span>
+                    </div>
                 </div>
                 <div class="left-feat">
                     <div class="feat-icon">📊</div>
-                    Premium members: 2% money back from company income
+                    <div>
+                        <strong>Money Back Rewards</strong><br>
+                        <span style="font-size:12px;opacity:0.8;">2% cashback for premium members</span>
+                    </div>
                 </div>
                 <div class="left-feat">
                     <div class="feat-icon">🔒</div>
-                    Admin-verified members only — secure & trusted
+                    <div>
+                        <strong>Secure & Trusted</strong><br>
+                        <span style="font-size:12px;opacity:0.8;">Admin-verified members only</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -316,7 +512,7 @@ body::after {
     <!-- Right Panel -->
     <div class="login-right">
         <h1 class="login-title">Welcome back!</h1>
-        <p class="login-sub">Sign in to your account to continue.</p>
+        <p class="login-sub">Sign in to access your account and continue your financial journey.</p>
 
         <?php if ($error): ?>
             <?php $isPending = str_contains($error, 'pending') || str_contains($error, 'disabled'); ?>
@@ -346,7 +542,7 @@ body::after {
             </div>
 
             <button type="submit" class="btn-login">
-                <i class="bi bi-box-arrow-in-right"></i> Sign In
+                <i class="bi bi-box-arrow-in-right"></i> <span id="btnText">Sign In</span>
             </button>
         </form>
 
@@ -354,7 +550,7 @@ body::after {
             Don't have an account?
             <a href="<?= APP_URL ?>/auth/register.php">Apply for membership</a>
         </div>
-        
+
         <div class="creator-credit">
             <div class="credit-divider"></div>
             <div class="credit-text">
@@ -378,6 +574,42 @@ function togglePwd() {
         icon.className = 'bi bi-eye';
     }
 }
+
+// Login form submission
+document.querySelector('form').addEventListener('submit', function(e) {
+    const btn = document.querySelector('.btn-login');
+    const originalContent = btn.innerHTML;
+    
+    // Show loading state
+    btn.classList.add('loading');
+    btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Signing in...';
+    
+    // Check if there's an error after form submission
+    <?php if ($error): ?>
+        // If there's an error, shake the form and reset button
+        setTimeout(() => {
+            document.querySelector('.login-right').classList.add('shake');
+            btn.classList.remove('loading');
+            btn.innerHTML = originalContent;
+            
+            // Remove shake class after animation
+            setTimeout(() => {
+                document.querySelector('.login-right').classList.remove('shake');
+            }, 500);
+        }, 100);
+    <?php endif; ?>
+});
+
+// Add shake animation to error messages
+<?php if ($error): ?>
+    setTimeout(() => {
+        document.querySelector('.login-right').classList.add('shake');
+        setTimeout(() => {
+            document.querySelector('.login-right').classList.remove('shake');
+        }, 500);
+    }, 100);
+<?php endif; ?>
 </script>
+
 </body>
 </html>

@@ -36,6 +36,12 @@ $overdueMonths = count(array_filter($billings, fn($b) => $b['status'] === 'Overd
 $progressPct   = $totalMonths > 0 ? round(($paidMonths / $totalMonths) * 100) : 0;
 $allPaid       = $totalMonths > 0 && $paidMonths === $totalMonths;
 
+$completedBillings = array_filter($billings, fn($b) => $b['status'] === 'Completed');
+$totalCollected = !empty($completedBillings) 
+    ? array_sum(array_map(fn($b) => $b['total_due'], $completedBillings))
+    : 0;
+$totalDueAmount = array_sum(array_map(fn($b) => $b['total_due'], $billings));
+
 $pageTitle = 'Loan #' . $loan['id'];
 
 $badge = match($loan['status']) {
@@ -50,50 +56,69 @@ $badge = match($loan['status']) {
 require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <a href="index.php" class="text-decoration-none text-muted small">
-            <i class="bi bi-arrow-left"></i> Back to Loans
-        </a>
-        <h4 class="fw-bold mb-0 mt-1">
-            <i class="bi bi-cash-coin"></i> Loan Application #<?= $loan['id'] ?>
-        </h4>
+<!-- Header Section with Breadcrumb -->
+<div class="mb-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0">
+            <li class="breadcrumb-item"><a href="<?= APP_URL ?>/admin/dashboard.php" class="text-decoration-none">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="index.php" class="text-decoration-none">Loans</a></li>
+            <li class="breadcrumb-item active fw-semibold" aria-current="page">Loan #<?= $loan['id'] ?></li>
+        </ol>
+    </nav>
+    
+    <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-cash-coin fs-4 text-primary"></i>
+                <h4 class="fw-bold mb-0">Loan Application #<?= $loan['id'] ?></h4>
+            </div>
+            <?php if ($loan['status'] === 'Active'): ?>
+            <span class="badge fs-6 bg-success d-flex align-items-center gap-2">
+                <span class="pulse-dot"></span>
+                <?= $loan['status'] ?>
+            </span>
+            <?php elseif ($loan['status'] !== 'Pending'): ?>
+                <span class="badge fs-6 bg-<?= $badge ?> <?= $loan['status']==='Pending'?'text-dark':'' ?>">
+                    <?= $loan['status'] ?>
+                </span>
+            <?php endif; ?>
+        </div>
+        <?php if ($loan['status'] === 'Pending'): ?>
+        <div class="d-flex gap-2">
+            <form method="POST" action="approve.php" onsubmit="return confirm('Approve and release this loan?')">
+                <input type="hidden" name="id" value="<?= $loan['id'] ?>">
+                <button class="btn btn-success"><i class="bi bi-check-circle"></i> Approve & Release</button>
+            </form>
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                <i class="bi bi-x-circle"></i> Reject
+            </button>
+        </div>
+        <?php endif; ?>
     </div>
-    <?php if ($loan['status'] === 'Pending'): ?>
-    <div class="d-flex gap-2">
-        <form method="POST" action="approve.php" onsubmit="return confirm('Approve and release this loan?')">
-            <input type="hidden" name="id" value="<?= $loan['id'] ?>">
-            <button class="btn btn-success"><i class="bi bi-check-circle"></i> Approve & Release</button>
-        </form>
-        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
-            <i class="bi bi-x-circle"></i> Reject
-        </button>
-    </div>
-    <?php else: ?>
-        <span class="badge fs-6 bg-<?= $badge ?> <?= $loan['status']==='Pending'?'text-dark':'' ?>">
-            <?= $loan['status'] ?>
-        </span>
-    <?php endif; ?>
 </div>
 
 <?= showFlash() ?>
 
-<!-- Amount Summary Banner -->
-<div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #0f2557, #1a3a7a);">
+<!-- Enhanced Amount Summary Banner -->
+<div class="card border-0 shadow-sm mb-4" style="background: linear-gradient(135deg, #0f2557, #1a3a7a); border-radius: 16px;">
     <div class="card-body py-4">
         <div class="row g-0 text-center text-white">
-            <div class="col-md-4 border-end border-white border-opacity-25 py-2">
-                <div class="small opacity-75 mb-1">Applied Amount</div>
+            <div class="col-md-4 border-end border-white border-opacity-25 py-3 px-4">
+                <i class="bi bi-cash-stack fs-4 mb-2 opacity-75"></i>
+                <div class="small opacity-75 mb-2">Applied Amount</div>
                 <div class="fs-3 fw-bold"><?= formatMoney($loan['applied_amount']) ?></div>
             </div>
-            <div class="col-md-4 border-end border-white border-opacity-25 py-2">
-                <div class="small opacity-75 mb-1">Interest Deducted (3%)</div>
+            <div class="col-md-4 border-end border-white border-opacity-25 py-3 px-4">
+                <i class="bi bi-percent fs-4 mb-2 opacity-75"></i>
+                <div class="small opacity-75 mb-2">Interest Deducted (3%)</div>
                 <div class="fs-3 fw-bold text-danger">− <?= formatMoney($interest) ?></div>
             </div>
-            <div class="col-md-4 py-2">
-                <div class="small opacity-75 mb-1">Borrower Will Receive</div>
-                <div class="fs-3 fw-bold" style="color:#f5c842;"><?= formatMoney($received) ?></div>
-                <div class="small opacity-75 mt-1">Transfer this amount via bank</div>
+            <div class="col-md-4 py-3 px-4">
+                <i class="bi bi-arrow-down-circle fs-4 mb-2 opacity-75"></i>
+                <div class="small opacity-75 mb-2">Borrower Will Receive</div>
+                <div class="fs-2 fw-bold" style="color:#f5c842;"><?= formatMoney($received) ?></div>
+                <div class="small opacity-75 mt-2">Transfer this amount via bank</div>
             </div>
         </div>
     </div>
@@ -111,25 +136,75 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 
 <div class="row g-3 mb-4">
     <div class="col-md-5">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
             <div class="card-header bg-white fw-bold border-0 pt-3">
                 <i class="bi bi-calculator text-primary"></i> Loan Summary
             </div>
             <div class="card-body">
                 <table class="table table-sm table-borderless mb-0">
-                    <tr><th class="text-muted" width="50%">Applied Amount</th><td class="fw-bold fs-5"><?= formatMoney($loan['applied_amount']) ?></td></tr>
-                    <tr><th class="text-muted">Interest (3%)</th><td class="text-danger">− <?= formatMoney($interest) ?></td></tr>
-                    <tr class="table-success"><th>Amount to Receive</th><td class="fw-bold"><?= formatMoney($received) ?></td></tr>
-                    <tr><th class="text-muted">Term</th><td><?= $loan['term_months'] ?> month<?= $loan['term_months'] > 1 ? 's' : '' ?></td></tr>
-                    <tr><th class="text-muted">Monthly Payment</th><td><?= formatMoney($monthly) ?></td></tr>
-                    <tr><th class="text-muted">Status</th>
-                        <td><span class="badge bg-<?= $badge ?> <?= $loan['status']==='Pending'?'text-dark':'' ?>"><?= $loan['status'] ?></span></td></tr>
-                    <tr><th class="text-muted">Applied On</th><td><?= date('M d, Y h:i A', strtotime($loan['created_at'])) ?></td></tr>
+                    <tr>
+                        <th class="text-muted" width="50%">
+                            <i class="bi bi-cash-stack me-1"></i> Applied Amount
+                        </th>
+                        <td class="fw-bold fs-5"><?= formatMoney($loan['applied_amount']) ?></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">
+                            <i class="bi bi-percent me-1"></i> Interest (3%)
+                        </th>
+                        <td class="text-danger">− <?= formatMoney($interest) ?></td>
+                    </tr>
+                    <tr style="background: linear-gradient(90deg, rgba(34, 197, 94, 0.1) 0%, transparent 100%); border-left: 4px solid #22c55e;">
+                        <th class="text-success fw-semibold">
+                            <i class="bi bi-arrow-down-circle me-1"></i> Amount to Receive
+                        </th>
+                        <td class="fw-bold text-success"><?= formatMoney($received) ?></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">
+                            <i class="bi bi-calendar-range me-1"></i> Term
+                        </th>
+                        <td><?= $loan['term_months'] ?> month<?= $loan['term_months'] > 1 ? 's' : '' ?></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">
+                            <i class="bi bi-calendar-month me-1"></i> Monthly Payment
+                        </th>
+                        <td><?= formatMoney($monthly) ?></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">
+                            <i class="bi bi-tag me-1"></i> Status
+                        </th>
+                        <td><span class="badge bg-<?= $badge ?> <?= $loan['status']==='Pending'?'text-dark':'' ?>"><?= $loan['status'] ?></span></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">
+                            <i class="bi bi-calendar-plus me-1"></i> Applied On
+                        </th>
+                        <td>
+                            <?= date('M d, Y', strtotime($loan['created_at'])) ?>
+                            <span class="text-muted small"> · <?= date('g:i A', strtotime($loan['created_at'])) ?></span>
+                        </td>
+                    </tr>
                     <?php if ($loan['approved_at']): ?>
-                    <tr><th class="text-muted">Approved On</th><td><?= date('M d, Y h:i A', strtotime($loan['approved_at'])) ?></td></tr>
+                    <tr>
+                        <th class="text-muted">
+                            <i class="bi bi-calendar-check me-1"></i> Approved On
+                        </th>
+                        <td>
+                            <?= date('M d, Y', strtotime($loan['approved_at'])) ?>
+                            <span class="text-muted small"> · <?= date('g:i A', strtotime($loan['approved_at'])) ?></span>
+                        </td>
+                    </tr>
                     <?php endif; ?>
                     <?php if ($loan['rejection_reason']): ?>
-                    <tr><th class="text-muted">Rejection Reason</th><td class="text-danger"><?= clean($loan['rejection_reason']) ?></td></tr>
+                    <tr>
+                        <th class="text-muted">
+                            <i class="bi bi-exclamation-triangle me-1"></i> Rejection Reason
+                        </th>
+                        <td class="text-danger"><?= clean($loan['rejection_reason']) ?></td>
+                    </tr>
                     <?php endif; ?>
                 </table>
                 <?php if ($loan['status'] === 'Pending'): ?>
@@ -143,41 +218,94 @@ require_once __DIR__ . '/../../includes/admin_header.php';
     </div>
 
     <div class="col-md-7">
-        <div class="card border-0 shadow-sm h-100">
+        <div class="card border-0 shadow-sm h-100" style="border-radius: 16px;">
             <div class="card-header bg-white fw-bold border-0 pt-3">
                 <i class="bi bi-person text-success"></i> Borrower Details
             </div>
             <div class="card-body">
+                <!-- Borrower Avatar and Name Section -->
+                <div class="d-flex align-items-center gap-3 mb-4">
+                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 60px; height: 60px; font-size: 24px; font-weight: bold;">
+                        <?= strtoupper(substr($loan['first_name'], 0, 1) . substr($loan['last_name'], 0, 1)) ?>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="fw-semibold mb-0"><?= clean($loan['first_name'] . ' ' . $loan['last_name']) ?></h5>
+                            <a href="<?= APP_URL ?>/admin/users/view.php?id=<?= $loan['user_id'] ?>" class="text-decoration-none small text-primary">
+                                View Profile →
+                            </a>
+                        </div>
+                        <div class="text-muted small"><?= clean($loan['email']) ?></div>
+                    </div>
+                </div>
+
                 <table class="table table-sm table-borderless mb-3">
-                    <tr><th class="text-muted" width="40%">Name</th><td class="fw-semibold"><?= clean($loan['first_name'] . ' ' . $loan['last_name']) ?></td></tr>
-                    <tr><th class="text-muted">Email</th><td><?= clean($loan['email']) ?></td></tr>
-                    <tr><th class="text-muted">Account Type</th>
-                        <td><span class="badge bg-<?= $loan['account_type']==='Premium'?'success':'secondary' ?>"><?= $loan['account_type'] ?></span></td></tr>
-                    <tr><th class="text-muted">Company</th><td><?= clean($loan['company_name'] ?? '—') ?></td></tr>
-                    <tr><th class="text-muted">Monthly Income</th>
-                        <td><?= !empty($loan['monthly_earnings']) ? formatMoney((float)$loan['monthly_earnings']) : '—' ?></td></tr>
+                    <tr>
+                        <th class="text-muted" width="40%">
+                            <i class="bi bi-tag me-1"></i> Account Type
+                        </th>
+                        <td><span class="badge bg-<?= $loan['account_type']==='Premium'?'success':'secondary' ?>"><?= $loan['account_type'] ?></span></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">
+                            <i class="bi bi-building me-1"></i> Company
+                        </th>
+                        <td><?= clean($loan['company_name'] ?? 'None') ?></td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">
+                            <i class="bi bi-wallet2 me-1"></i> Monthly Income
+                        </th>
+                        <td><?= !empty($loan['monthly_earnings']) ? formatMoney((float)$loan['monthly_earnings']) : 'Not specified' ?></td>
+                    </tr>
                 </table>
 
-                <p class="fw-semibold text-muted small mb-2">BANK DETAILS (transfer money here)</p>
-                <div class="rounded p-3" style="background:#f0f4ff;border:1.5px solid #c7d4f0;">
-                    <div class="row g-2">
-                        <div class="col-6">
-                            <div class="text-muted small">Bank Name</div>
-                            <div class="fw-semibold"><?= clean($loan['bank_name'] ?? '—') ?></div>
-                        </div>
-                        <div class="col-6">
-                            <div class="text-muted small">Account Number</div>
-                            <div class="fw-semibold"><?= clean($loan['bank_account_number'] ?? '—') ?></div>
-                        </div>
+                <p class="fw-semibold text-muted small mb-3">
+                        <i class="bi bi-bank me-1"></i> BANK DETAILS (transfer money here)
+                    </p>
+                <div class="rounded-3 p-4" style="background:#f8fafc;border:1.5px solid #e2e8f0;">
+                    <div class="row g-3">
                         <div class="col-12">
-                            <div class="text-muted small">Card Holder's Name</div>
-                            <div class="fw-semibold"><?= clean($loan['card_holder_name'] ?? '—') ?></div>
+                            <div class="text-muted small mb-1">Bank Name</div>
+                            <div class="fw-semibold d-flex align-items-center gap-2">
+                                <i class="bi bi-bank2 text-primary"></i>
+                                <?= clean($loan['bank_name'] ?? 'Not specified') ?>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="text-muted small mb-1">Account Number</div>
+                            <div class="fw-semibold d-flex align-items-center gap-2">
+                                <span id="accountNumber"><?= clean($loan['bank_account_number'] ?? 'Not specified') ?></span>
+                                <?php if (!empty($loan['bank_account_number'])): ?>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="copyAccountNumber()" title="Copy account number">
+                                    <i class="bi bi-clipboard"></i>
+                                </button>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="col-md-5">
+                            <div class="text-muted small mb-1">Card Holder's Name</div>
+                            <div class="fw-semibold"><?= clean($loan['card_holder_name'] ?? 'Not specified') ?></div>
                         </div>
                     </div>
                 </div>
-                <div class="alert alert-info mt-3 small mb-0">
-                    <i class="bi bi-send"></i>
-                    After approving, manually transfer <strong><?= formatMoney($received) ?></strong> to the bank account above.
+                <!-- Enhanced Transfer Instruction Banner -->
+                <div class="alert d-flex gap-3 align-items-start mb-0" style="background: linear-gradient(135deg, #e0f2fe, #bae6fd); border: none; border-radius: 12px;">
+                    <i class="bi bi-info-circle-fill fs-4 text-info flex-shrink-0"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold text-dark mb-1">Transfer Instruction</div>
+                        <div class="small text-dark">
+                            After approving, manually transfer <strong class="text-success"><?= formatMoney($received) ?></strong> to the bank account above.
+                        </div>
+                        <div class="mt-2">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="transferDone" onchange="toggleTransferStatus()">
+                                <label class="form-check-label small text-dark" for="transferDone">
+                                    <strong>Transfer Done</strong> - Check this box when you've completed the bank transfer
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -365,6 +493,41 @@ function openMarkPaidModal(billingId, monthNum, dueDate, amount, borrower) {
     document.getElementById('mpDueDate').textContent   = dueDate;
     document.getElementById('mpAmount').textContent    = amount;
     new bootstrap.Modal(document.getElementById('markPaidModal')).show();
+}
+
+function copyAccountNumber() {
+    const accountNumber = document.getElementById('accountNumber').textContent;
+    if (accountNumber && accountNumber !== 'Not specified') {
+        navigator.clipboard.writeText(accountNumber).then(() => {
+            // Show success feedback
+            const button = event.target.closest('button');
+            const originalHTML = button.innerHTML;
+            button.innerHTML = '<i class="bi bi-check"></i>';
+            button.classList.add('btn-success');
+            button.classList.remove('btn-outline-secondary');
+            
+            setTimeout(() => {
+                button.innerHTML = originalHTML;
+                button.classList.remove('btn-success');
+                button.classList.add('btn-outline-secondary');
+            }, 2000);
+        });
+    }
+}
+
+function toggleTransferStatus() {
+    const checkbox = document.getElementById('transferDone');
+    const alertDiv = checkbox.closest('.alert');
+    
+    if (checkbox.checked) {
+        alertDiv.style.background = 'linear-gradient(135deg, #dcfce7, #bbf7d0)';
+        alertDiv.querySelector('.text-info').classList.remove('text-info');
+        alertDiv.querySelector('.text-info').classList.add('text-success');
+    } else {
+        alertDiv.style.background = 'linear-gradient(135deg, #e0f2fe, #bae6fd)';
+        alertDiv.querySelector('.text-success').classList.remove('text-success');
+        alertDiv.querySelector('.text-success').classList.add('text-info');
+    }
 }
 </script>
 

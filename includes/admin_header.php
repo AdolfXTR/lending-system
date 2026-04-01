@@ -33,7 +33,9 @@ body {
 
 /* ── ADMIN NAVBAR ──────────────────────────────────────── */
 .ls-nav {
-    background: #1e293b;
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     height: 58px;
     display: flex;
     align-items: center;
@@ -42,7 +44,8 @@ body {
     position: sticky;
     top: 0;
     z-index: 1000;
-    box-shadow: 0 2px 12px rgba(15,37,87,0.3);
+    box-shadow: 0 4px 20px rgba(15,37,87,0.3);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 .ls-nav-brand {
     display: flex; align-items: center; gap: 10px;
@@ -299,6 +302,38 @@ body {
 .empty-state .empty-icon { font-size: 42px; margin-bottom: 12px; }
 .empty-state .empty-title { font-size: 15px; font-weight: 700; color: #374151; margin-bottom: 6px; }
 .empty-state .empty-sub { font-size: 13px; }
+
+/* ── PULSE ANIMATION ─────────────────────────────────────── */
+.pulse-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(34, 197, 94, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+.adm-badge.active::after {
+    content: "";
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #22c55e;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    margin-left: 4px;
+}
 
 </style>
 </head>

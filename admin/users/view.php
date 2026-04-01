@@ -32,53 +32,604 @@ $billing = $pdo->prepare("SELECT * FROM billing WHERE user_id = ? ORDER BY due_d
 $billing->execute([$id]);
 $billing = $billing->fetchAll();
 
+// Calculate summary stats
+$totalBorrowed = array_sum(array_column(array_filter($loans, fn($l) => $l['status'] !== 'Rejected'), 'applied_amount'));
+$activeLoans = count(array_filter($loans, fn($l) => $l['status'] === 'Active'));
+$completedLoans = count(array_filter($loans, fn($l) => $l['status'] === 'Completed'));
+
+$totalDeposits = array_sum(array_column(array_filter($savingsTxns, fn($t) => $t['category'] === 'Deposit'), 'amount'));
+$totalWithdrawals = array_sum(array_column(array_filter($savingsTxns, fn($t) => $t['category'] === 'Withdrawal'), 'amount'));
+$netBalance = $totalDeposits - $totalWithdrawals;
+
+$totalDue = array_sum(array_column($billing, 'amount_due'));
+$totalPaid = array_sum(array_column(array_filter($billing, fn($b) => $b['status'] === 'Completed'), 'total_due'));
+$remainingBalance = $totalDue - $totalPaid;
+
 $pageTitle = 'User — ' . $user['first_name'] . ' ' . $user['last_name'];
 
 require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <a href="index.php" class="text-decoration-none text-muted small">
-            <i class="bi bi-arrow-left"></i> Back to Users
-        </a>
-        <h4 class="fw-bold mb-0 mt-1">
-            <i class="bi bi-person-badge"></i>
-            <?= clean($user['first_name'] . ' ' . $user['last_name']) ?>
-        </h4>
+<style>
+/* Enhanced User View Styles */
+.user-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 32px;
+    position: relative;
+    overflow: hidden;
+}
+
+.user-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.03"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+    opacity: 0.1;
+}
+
+.user-header-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.user-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #14b8a6 0%, #0891b2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    margin-right: 24px;
+    box-shadow: 0 8px 24px rgba(20, 184, 166, 0.3);
+    border: 3px solid rgba(255, 255, 255, 0.2);
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    font-size: 28px;
+    font-weight: 800;
+    color: white;
+    margin: 0 0 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.user-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-premium {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.badge-active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.active-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: white;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.user-subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 15px;
+    margin: 0;
+}
+
+.btn-edit-account {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-edit-account:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+    color: white;
+}
+
+/* Enhanced Tabs */
+.user-tabs {
+    border: none;
+    background: white;
+    border-radius: 16px;
+    padding: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-bottom: 24px;
+}
+
+.user-tabs .nav-link {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 600;
+    color: #64748b;
+    transition: all 0.3s ease;
+    position: relative;
+    margin: 0 4px;
+}
+
+.user-tabs .nav-link:hover {
+    background: #f8fafc;
+    color: #334155;
+}
+
+.user-tabs .nav-link.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.user-tabs .badge {
+    background: rgba(255, 255, 255, 0.2);
+    color: inherit;
+    font-weight: 600;
+}
+
+.user-tabs .nav-link.active .badge {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Enhanced Cards */
+.info-card {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-bottom: 24px;
+}
+
+.info-card:hover {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.info-card-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.info-card-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #374151;
+    margin: 0;
+}
+
+.info-card-body {
+    padding: 24px;
+}
+
+/* 2-Column Grid Layout */
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.info-grid-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+.info-grid-item:hover {
+    background: #f8fafc;
+}
+
+.info-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.info-icon.person { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+.info-icon.email { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); }
+.info-icon.phone { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.info-icon.address { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.info-icon.calendar { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+.info-icon.money { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+.info-icon.bank { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.info-icon.work { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+
+.info-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.info-value {
+    font-size: 15px;
+    color: #1e293b;
+    font-weight: 500;
+    word-break: break-word;
+}
+
+/* Summary Cards */
+.summary-card {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.summary-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.summary-value {
+    font-size: 28px;
+    font-weight: 800;
+    color: #1e293b;
+    margin: 0;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+}
+
+/* Enhanced Tables */
+.data-table {
+    background: white;
+    border-radius: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.data-table table {
+    margin: 0;
+}
+
+.data-table thead {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+.data-table th {
+    font-weight: 700;
+    color: #374151;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 16px;
+    border: none;
+}
+
+.data-table td {
+    padding: 16px;
+    vertical-align: middle;
+    border-top: 1px solid #f1f5f9;
+}
+
+.data-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.data-table tbody tr.overdue {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.data-table tbody tr.overdue:hover {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+.btn-view {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-view:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    color: white;
+}
+
+/* Savings Balance Card */
+.balance-card {
+    background: linear-gradient(135deg, #14b8a6 0%, #059669 100%);
+    border-radius: 16px;
+    padding: 32px;
+    color: white;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(20, 184, 166, 0.3);
+}
+
+.balance-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+.balance-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.9;
+}
+
+.balance-label {
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+    margin-bottom: 8px;
+}
+
+.balance-amount {
+    font-size: 36px;
+    font-weight: 800;
+    margin: 0;
+    position: relative;
+    z-index: 1;
+}
+
+/* Transaction Badges */
+.badge-deposit {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    color: white;
+}
+
+.badge-withdrawal {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+    color: white;
+}
+
+.amount-positive {
+    color: #059669;
+    font-weight: 600;
+}
+
+.amount-negative {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+/* Status Badges */
+.badge-completed {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.badge-pending {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+.badge-overdue {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.btn-mark-paid {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.btn-mark-paid:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    color: white;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .user-header-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+    
+    .user-avatar {
+        margin-right: 0;
+        margin-bottom: 16px;
+    }
+    
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+    
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .user-tabs .nav-link {
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #374151;
+        border-bottom: 2px solid transparent;
+        transition: all 0.2s ease;
+    }
+
+    .user-tabs .nav-link.active {
+        color: #059669;
+        border-bottom-color: #059669;
+    }
+
+    .user-tabs .nav-link:hover {
+        color: #059669;
+    }
+
+    .user-tabs .nav-link i {
+        margin-right: 8px;
+    }
+</style>
+
+<!-- Enhanced User Header -->
+<div class="user-header">
+    <div class="user-header-content">
+        <div style="display: flex; align-items: center;">
+            <div class="user-avatar">
+                <?= strtoupper(substr($user['first_name'],0,1).substr($user['last_name'],0,1)) ?>
+            </div>
+            <div class="user-info">
+                <a href="index.php" class="text-decoration-none text-white small mb-2 d-inline-block">
+                    <i class="bi bi-arrow-left"></i> Back to Users
+                </a>
+                <h1 class="user-name">
+                    <?= clean($user['first_name'] . ' ' . $user['last_name']) ?>
+                    <div class="user-badges">
+                        <?php if ($user['account_type'] === 'Premium'): ?>
+                            <span class="user-badge badge-premium">
+                                <i class="bi bi-star-fill"></i> Premium
+                            </span>
+                        <?php endif; ?>
+                        <?php if ($user['status'] === 'Active'): ?>
+                            <span class="user-badge badge-active">
+                                <span class="active-dot"></span> Active
+                            </span>
+                        <?php endif; ?>
+                    </div>
+                </h1>
+                <p class="user-subtitle">User ID #<?= $user['id'] ?> • Member since <?= date('F Y', strtotime($user['created_at'])) ?></p>
+            </div>
+        </div>
+        <button class="btn-edit-account" data-bs-toggle="modal" data-bs-target="#editModal">
+            <i class="bi bi-pencil"></i> Edit Account
+        </button>
     </div>
-    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#editModal">
-        <i class="bi bi-pencil"></i> Edit Account
-    </button>
 </div>
 
 <?= showFlash() ?>
 
-<!-- Nav Tabs -->
-<ul class="nav nav-tabs mb-3" id="userTab">
+<!-- Enhanced Nav Tabs -->
+<ul class="nav nav-tabs user-tabs mb-4" id="userTab">
     <li class="nav-item">
-        <a class="nav-link active" data-bs-toggle="tab" href="#profile">Profile</a>
+        <a class="nav-link active" data-bs-toggle="tab" href="#profile">
+            <i class="bi bi-person"></i> Profile
+        </a>
     </li>
     <li class="nav-item">
         <a class="nav-link" data-bs-toggle="tab" href="#loans">
-            Loans <span class="badge bg-secondary ms-1"><?= count($loans) ?></span>
+            <i class="bi bi-cash-stack"></i> Loans 
+            <span class="badge ms-1"><?= count($loans) ?></span>
         </a>
     </li>
     <?php if ($user['account_type'] === 'Premium'): ?>
     <li class="nav-item">
-        <a class="nav-link" data-bs-toggle="tab" href="#savings">Savings</a>
+        <a class="nav-link" data-bs-toggle="tab" href="#savings">
+            <i class="bi bi-piggy-bank"></i> Savings
+        </a>
     </li>
     <?php endif; ?>
     <li class="nav-item">
         <a class="nav-link" data-bs-toggle="tab" href="#billing">
-            Billing <span class="badge bg-secondary ms-1"><?= count($billing) ?></span>
+            <i class="bi bi-receipt"></i> Billing 
+            <span class="badge ms-1"><?= count($billing) ?></span>
         </a>
     </li>
 </ul>
 
 <div class="tab-content">
-
-    <!-- Profile Tab -->
+    <!-- ... existing content ... -->
     <div class="tab-pane fade show active" id="profile">
         <div class="row g-3">
             <div class="col-md-6">

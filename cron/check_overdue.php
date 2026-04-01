@@ -58,6 +58,14 @@ $pdo->query("
 
 $log[] = "Overdue check complete.";
 
+// Log to file for tracking
+$logFile = __DIR__ . '/../logs/cron.log';
+$logDir = dirname($logFile);
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+file_put_contents($logFile, date('Y-m-d H:i:s') . " - check_overdue.php executed\n", FILE_APPEND);
+
 // Output log
 echo "<pre>";
 echo "=== CRON: check_overdue.php ===\n";

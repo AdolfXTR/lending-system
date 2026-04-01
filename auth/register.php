@@ -24,6 +24,12 @@ body {
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     background: #f0f2f7; margin: 0; padding: 0;
     color: #1a1f2e; font-size: 14px;
+    animation: fadeIn 0.8s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 .reg-topbar {
     background: #0f2557;
@@ -88,13 +94,14 @@ body {
     border: 1.5px solid rgba(0,0,0,0.1);
     border-radius: 8px; font-family: inherit;
     font-size: 14px; padding: 9px 13px;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    transition: all 0.3s ease;
     color: #1a1f2e;
 }
 .form-control:focus, .form-select:focus {
     border-color: #1a45a8;
-    box-shadow: 0 0 0 3px rgba(26,69,168,0.1);
+    box-shadow: 0 0 0 3px rgba(26,69,168,0.1), 0 0 15px rgba(26,69,168,0.2);
     outline: none;
+    transform: translateY(-1px);
 }
 .form-text { font-size: 11px; color: #9ca3af; margin-top: 4px; }
 .input-group-text {
@@ -119,6 +126,20 @@ body {
     border: 1px solid #fecaca; border-radius: 10px;
     padding: 14px 18px; margin-bottom: 20px;
     font-size: 13px;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 200px;
+    }
 }
 .reg-alert ul { margin: 8px 0 0; padding-left: 18px; }
 .reg-alert li { margin-bottom: 3px; }
@@ -149,6 +170,31 @@ body {
 }
 .login-cta a { color: #1a45a8; font-weight: 700; text-decoration: none; }
 .login-cta a:hover { text-decoration: underline; }
+
+/* Progress Percentage */
+.progress-percentage {
+    margin-bottom: 32px;
+    text-align: center;
+}
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1a45a8, #16a34a);
+    width: 25%;
+    transition: width 0.5s ease;
+}
+.progress-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+}
 
 /* Progress Bar */
 .progress-steps {
@@ -202,6 +248,24 @@ body {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* Slide animations */
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slideOutLeft {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(-30px); }
+}
+@keyframes slideOutRight {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(30px); }
 }
 
 /* File upload preview */
@@ -340,6 +404,14 @@ body {
             <div class="step-number">4</div>
             <span class="step-label">Documents</span>
         </div>
+    </div>
+    
+    <!-- Progress Percentage -->
+    <div class="progress-percentage">
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <div class="progress-text" id="progressText">25% Complete</div>
     </div>
 
     <form method="POST" action="<?= APP_URL ?>/auth/register_process.php" enctype="multipart/form-data" id="regForm">
@@ -648,6 +720,12 @@ function checkPassword(val) {
 let currentStep = 1;
 const totalSteps = 4;
 
+function updateProgress() {
+    const percentage = (currentStep / totalSteps) * 100;
+    document.getElementById('progressFill').style.width = percentage + '%';
+    document.getElementById('progressText').textContent = percentage + '% Complete';
+}
+
 function nextStep(step) {
     // Validate current step before moving
     const currentSection = document.getElementById('step' + currentStep);
@@ -668,33 +746,67 @@ function nextStep(step) {
         return;
     }
     
-    // Hide current step
-    document.getElementById('step' + currentStep).classList.remove('active');
-    document.getElementById('step' + currentStep + '-indicator').classList.remove('active');
-    document.getElementById('step' + currentStep + '-indicator').classList.add('completed');
+    // Add slide animation
+    const currentSectionEl = document.getElementById('step' + currentStep);
+    const nextSectionEl = document.getElementById('step' + step);
     
-    // Show next step
-    currentStep = step;
-    document.getElementById('step' + currentStep).classList.add('active');
-    document.getElementById('step' + currentStep + '-indicator').classList.add('active');
+    // Slide out current
+    currentSectionEl.style.animation = 'slideOutLeft 0.3s ease-out';
     
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+        // Hide current step
+        currentSectionEl.classList.remove('active');
+        currentSectionEl.style.animation = '';
+        
+        // Mark as completed with checkmark
+        const indicator = document.getElementById('step' + currentStep + '-indicator');
+        indicator.classList.remove('active');
+        indicator.classList.add('completed');
+        indicator.querySelector('.step-number').innerHTML = '<i class="bi bi-check"></i>';
+        
+        // Show next step
+        currentStep = step;
+        nextSectionEl.classList.add('active');
+        nextSectionEl.style.animation = 'slideInRight 0.3s ease-out';
+        
+        // Update progress
+        updateProgress();
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 300);
 }
 
 function prevStep(step) {
-    // Hide current step
-    document.getElementById('step' + currentStep).classList.remove('active');
-    document.getElementById('step' + currentStep + '-indicator').classList.remove('active');
+    // Add slide animation
+    const currentSectionEl = document.getElementById('step' + currentStep);
+    const prevSectionEl = document.getElementById('step' + step);
     
-    // Show previous step
-    currentStep = step;
-    document.getElementById('step' + currentStep).classList.add('active');
-    document.getElementById('step' + currentStep + '-indicator').classList.add('active');
-    document.getElementById('step' + currentStep + '-indicator').classList.remove('completed');
+    // Slide out current
+    currentSectionEl.style.animation = 'slideOutRight 0.3s ease-out';
     
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => {
+        // Hide current step
+        currentSectionEl.classList.remove('active');
+        currentSectionEl.style.animation = '';
+        
+        // Show previous step
+        currentStep = step;
+        prevSectionEl.classList.add('active');
+        prevSectionEl.style.animation = 'slideInLeft 0.3s ease-out';
+        
+        // Remove completed status
+        const indicator = document.getElementById('step' + currentStep + '-indicator');
+        indicator.classList.add('active');
+        indicator.classList.remove('completed');
+        indicator.querySelector('.step-number').innerHTML = currentStep;
+        
+        // Update progress
+        updateProgress();
+        
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 300);
 }
 
 // File preview function
@@ -705,24 +817,74 @@ function previewFile(input, previewId) {
     if (file) {
         const fileName = file.name;
         const fileExt = fileName.split('.').pop().toLowerCase();
+        const fileSize = (file.size / 1024).toFixed(2) + ' KB';
+        
+        // Add animation
+        preview.style.animation = 'fadeIn 0.3s ease';
         
         if (['jpg', 'jpeg', 'png'].includes(fileExt)) {
             const reader = new FileReader();
             reader.onload = function(e) {
-                preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Preview">
+                    <div class="file-info">
+                        <span class="file-name">${fileName}</span>
+                        <span class="file-size">${fileSize}</span>
+                    </div>
+                `;
             };
             reader.readAsDataURL(file);
         } else if (fileExt === 'pdf') {
             preview.innerHTML = `
                 <i class="bi bi-file-earmark-pdf file-icon" style="color: #dc2626;"></i>
-                <span class="file-name">${fileName}</span>
+                <div class="file-info">
+                    <span class="file-name">${fileName}</span>
+                    <span class="file-size">${fileSize}</span>
+                </div>
             `;
         } else {
             preview.innerHTML = `
                 <i class="bi bi-file-earmark file-icon"></i>
-                <span class="file-name">${fileName}</span>
+                <div class="file-info">
+                    <span class="file-name">${fileName}</span>
+                    <span class="file-size">${fileSize}</span>
+                </div>
             `;
         }
+    }
+}
+
+// Initialize progress on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateProgress();
+    
+    // Add input validation listeners
+    document.querySelectorAll('.form-control, .form-select').forEach(input => {
+        input.addEventListener('input', function() {
+            if (this.hasAttribute('required') && this.value.trim()) {
+                this.classList.remove('is-invalid');
+            }
+            updateNextButton();
+        });
+    });
+});
+
+function updateNextButton() {
+    const currentSection = document.getElementById('step' + currentStep);
+    const requiredFields = currentSection.querySelectorAll('[required]');
+    const nextBtn = currentSection.querySelector('.btn-nav-next');
+    
+    if (nextBtn) {
+        let allValid = true;
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                allValid = false;
+            }
+        });
+        
+        nextBtn.disabled = !allValid;
+        nextBtn.style.opacity = allValid ? '1' : '0.6';
+        nextBtn.style.cursor = allValid ? 'pointer' : 'not-allowed';
     }
 }
 </script>
