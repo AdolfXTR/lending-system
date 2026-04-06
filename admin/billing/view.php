@@ -30,6 +30,8 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 
 <style>
 /* Custom Payment Confirmation Modal Styles */
+.text-amber { color: #f59e0b !important; }
+
 .payment-modal-overlay {
     position: fixed;
     top: 0;
@@ -391,13 +393,13 @@ function copyAccountNumber() {
                         <th class="text-muted">
                             <i class="bi bi-percent me-1"></i> Interest (3%)
                         </th>
-                        <td class="text-danger"><?= $bill['interest'] > 0 ? formatMoney($bill['interest']) : '—' ?></td>
+                        <td class="text-amber"><?= $bill['interest'] > 0 ? formatMoney($bill['interest']) : formatMoney(0) ?></td>
                     </tr>
                     <tr>
                         <th class="text-muted">
-                            <i class="bi bi-exclamation-triangle me-1"></i> Penalty (2%)
+                            <i class="bi bi-exclamation-triangle me-1"></i> Penalty<?= $bill['penalty'] > 0 ? ' (2%)' : '' ?>
                         </th>
-                        <td class="text-danger"><?= $bill['penalty'] > 0 ? formatMoney($bill['penalty']) : '—' ?></td>
+                        <td class="text-amber"><?= $bill['penalty'] > 0 ? formatMoney($bill['penalty']) : formatMoney(0) ?></td>
                     </tr>
                     <tr style="background: linear-gradient(90deg, rgba(34, 197, 94, 0.1) 0%, transparent 100%); border-left: 4px solid #22c55e;">
                         <th class="text-success fw-semibold">

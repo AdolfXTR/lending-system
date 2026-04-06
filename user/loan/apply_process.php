@@ -57,8 +57,6 @@ if (!empty($errors)) {
 
 // Insert loan application
 $txnId = generateTransactionId('LN');
-$no    = getNextNo($pdo, 'loan_transactions');
-
 $stmt = $pdo->prepare("
     INSERT INTO loans (user_id, applied_amount, term_months, status, created_at)
     VALUES (?, ?, ?, 'Pending', NOW())
@@ -66,12 +64,23 @@ $stmt = $pdo->prepare("
 $stmt->execute([$userId, $amount, $termMonths]);
 $loanId = $pdo->lastInsertId();
 
-// Record in loan_transactions
+// Check for duplicate transaction today with same loan_id, type, and amount
 $stmt = $pdo->prepare("
-    INSERT INTO loan_transactions (no, transaction_id, loan_id, user_id, type, amount, status, created_at)
-    VALUES (?, ?, ?, ?, 'Loan Application', ?, 'Pending', NOW())
+    SELECT COUNT(*) FROM loan_transactions 
+    WHERE loan_id = ? AND type = 'Loan Application' AND amount = ?
 ");
-$stmt->execute([$no, $txnId, $loanId, $userId, $amount]);
+$stmt->execute([$loanId, $amount]);
+$alreadyExists = $stmt->fetchColumn() > 0;
+
+if (!$alreadyExists) {
+    $txnId = generateTransactionId('LN');
+    $no    = getNextNo($pdo, 'loan_transactions');
+    $stmt = $pdo->prepare("
+        INSERT INTO loan_transactions (no, transaction_id, loan_id, user_id, type, amount, status, created_at)
+        VALUES (?, ?, ?, ?, 'Loan Application', ?, 'Pending', NOW())
+    ");
+    $stmt->execute([$no, $txnId, $loanId, $userId, $amount]);
+}
 
 setFlash('success', 'Your loan application has been submitted! Please wait for admin approval.');
 header('Location: ' . APP_URL . '/user/loan/index.php');

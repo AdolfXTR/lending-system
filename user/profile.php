@@ -48,9 +48,24 @@ require_once __DIR__ . '/../includes/header.php';
     color: #1a1f2e; background: #fff; outline: none;
     transition: border-color .15s, box-shadow .15s; width: 100%;
 }
+.readonly-styled {
+    background: #f8fafc !important; 
+    color: #6b7280 !important; 
+    border-color: #d1d5db !important;
+    position: relative;
+    padding-left: 36px !important;
+}
+.readonly-styled::before {
+    content: '🔒';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: #9ca3af;
+}
 .form-inp:focus { border-color: #1a45a8; box-shadow: 0 0 0 3px rgba(26,69,168,.1); }
 .form-inp:disabled, .form-inp[readonly] { background: #f8fafc; color: #9ca3af; cursor: not-allowed; }
-.form-inp.readonly-styled { background: #f0f4ff; color: #475569; border-color: transparent; }
 .form-hint { font-size: 11px; color: #9ca3af; display: flex; align-items: flex-start; gap: 4px; }
 .form-hint.warn { color: #d97706; }
 

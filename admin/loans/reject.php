@@ -37,13 +37,23 @@ $pdo->prepare("
 ")->execute([$reason, $id]);
 
 // Record in loan_transactions
-$txnId = generateTransactionId();
-$noVal = $pdo->query("SELECT COALESCE(MAX(no),0)+1 FROM loan_transactions")->fetchColumn();
-$pdo->prepare("
-    INSERT INTO loan_transactions
-        (no, transaction_id, loan_id, user_id, type, amount, status, note, created_at)
-    VALUES (?, ?, ?, ?, 'Application', ?, 'Rejected', ?, NOW())
-")->execute([$noVal, $txnId, $id, $loan['user_id'], $loan['applied_amount'], $reason]);
+// Check for duplicate transaction with same loan_id, type, and amount
+$stmt = $pdo->prepare("
+    SELECT COUNT(*) FROM loan_transactions 
+    WHERE loan_id = ? AND type = 'Application' AND amount = ?
+");
+$stmt->execute([$id, $loan['applied_amount']]);
+$alreadyExists = $stmt->fetchColumn() > 0;
+
+if (!$alreadyExists) {
+    $txnId = generateTransactionId();
+    $noVal = $pdo->query("SELECT COALESCE(MAX(no),0)+1 FROM loan_transactions")->fetchColumn();
+    $pdo->prepare("
+        INSERT INTO loan_transactions
+            (no, transaction_id, loan_id, user_id, type, amount, status, note, created_at)
+        VALUES (?, ?, ?, ?, 'Application', ?, 'Rejected', ?, NOW())
+    ")->execute([$noVal, $txnId, $id, $loan['user_id'], $loan['applied_amount'], $reason]);
+}
 
 // Send email
 sendMail(

@@ -56,6 +56,11 @@ $badge = match($loan['status']) {
 require_once __DIR__ . '/../../includes/admin_header.php';
 ?>
 
+<style>
+/* Amber text color for Interest column */
+.text-amber { color: #d97706 !important; }
+</style>
+
 <!-- Header Section with Breadcrumb -->
 <div class="mb-4">
     <!-- Breadcrumb -->
@@ -72,6 +77,11 @@ require_once __DIR__ . '/../../includes/admin_header.php';
             <div class="d-flex align-items-center gap-2">
                 <i class="bi bi-cash-coin fs-4 text-primary"></i>
                 <h4 class="fw-bold mb-0">Loan Application #<?= $loan['id'] ?></h4>
+                <?php if (!empty($loan['transfer_done'])): ?>
+                <span class="badge bg-success d-flex align-items-center gap-1">
+                    <i class="bi bi-check-circle-fill"></i> Transfer Completed
+                </span>
+                <?php endif; ?>
             </div>
             <?php if ($loan['status'] === 'Active'): ?>
             <span class="badge fs-6 bg-success d-flex align-items-center gap-2">
@@ -299,7 +309,9 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                         </div>
                         <div class="mt-2">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="transferDone" onchange="toggleTransferStatus()">
+                                <input class="form-check-input" type="checkbox" id="transferDone" 
+                                    <?= !empty($loan['transfer_done']) ? 'checked' : '' ?>
+                                    onchange="toggleTransferStatus(this)">
                                 <label class="form-check-label small text-dark" for="transferDone">
                                     <strong>Transfer Done</strong> - Check this box when you've completed the bank transfer
                                 </label>
@@ -328,10 +340,13 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                 <?php endif; ?>
             </div>
         </div>
-        <div class="progress mt-2" style="height:10px;border-radius:99px;">
-            <div class="progress-bar bg-success" style="width:<?= $progressPct ?>%;border-radius:99px;"></div>
+        <div class="progress mt-3" style="height:12px;border-radius:20px;background:#e8ecf5;overflow:hidden;">
+            <div class="progress-bar" style="width:<?= $progressPct ?>%;border-radius:20px;background:linear-gradient(90deg, #10b981 0%, #059669 100%);"></div>
         </div>
-        <div class="small text-muted mt-1"><?= $progressPct ?>% complete</div>
+        <div class="d-flex justify-content-between align-items-center mt-2">
+            <span class="small text-muted"><?= $paidMonths ?> of <?= $totalMonths ?> months paid</span>
+            <span class="fw-bold text-success"><?= $progressPct ?>% complete</span>
+        </div>
     </div>
 
     <div class="card-body p-0">
@@ -357,10 +372,10 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                     <td class="fw-semibold">Month <?= $b['month_number'] ?></td>
                     <td class="small"><?= date('M d, Y', strtotime($b['due_date'])) ?></td>
                     <td><?= formatMoney($b['amount_due']) ?></td>
-                    <td class="text-danger small"><?= $b['interest'] > 0 ? formatMoney($b['interest']) : '—' ?></td>
-                    <td class="text-danger small"><?= $b['penalty'] > 0 ? formatMoney($b['penalty']) : '—' ?></td>
+                    <td class="text-amber small"><?= $b['interest'] > 0 ? formatMoney($b['interest']) : formatMoney(0) ?></td>
+                    <td class="text-amber small"><?= $b['penalty'] > 0 ? formatMoney($b['penalty']) : formatMoney(0) ?></td>
                     <td class="fw-bold"><?= formatMoney($b['total_due']) ?></td>
-                    <td class="small text-muted"><?= $b['paid_at'] ? date('M d, Y', strtotime($b['paid_at'])) : '—' ?></td>
+                    <td class="small text-muted"><?= $b['paid_at'] ? date('M d, Y', strtotime($b['paid_at'])) : '<span class="text-warning">Not yet paid</span>' ?></td>
                     <td>
                         <span class="badge bg-<?= $bb ?> <?= $b['status']==='Pending'?'text-dark':'' ?>">
                             <?= $b['status'] ?>
@@ -515,10 +530,32 @@ function copyAccountNumber() {
     }
 }
 
-function toggleTransferStatus() {
-    const checkbox = document.getElementById('transferDone');
+function toggleTransferStatus(checkbox) {
     const alertDiv = checkbox.closest('.alert');
+    const loanId = <?= $loan['id'] ?>;
     
+    // Send AJAX request to save state
+    fetch('update_transfer.php', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            loan_id: loanId,
+            transfer_done: checkbox.checked ? 1 : 0
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            console.log('Transfer status saved');
+        } else {
+            console.error('Failed to save transfer status:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error saving transfer status:', error);
+    });
+    
+    // Visual feedback
     if (checkbox.checked) {
         alertDiv.style.background = 'linear-gradient(135deg, #dcfce7, #bbf7d0)';
         alertDiv.querySelector('.text-info').classList.remove('text-info');

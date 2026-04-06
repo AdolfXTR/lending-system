@@ -56,16 +56,33 @@ try {
     $stmt->execute([$received, $approvedAt, $loan_id]);
 
     // ── 2. Record approval in loan_transactions ──────────────
-    $txnId = generateTransactionId('TXN');
-    $no    = getNextNo($pdo, 'loan_transactions');
-    $stmt  = $pdo->prepare("
-        INSERT INTO loan_transactions
-            (no, transaction_id, loan_id, user_id, type, amount, status, note, created_at)
-        VALUES (?, ?, ?, ?, 'Approval', ?, 'Approved', 'Loan approved and released.', ?)
+    // Check for duplicate transaction with same loan_id, type, and amount
+    $stmt = $pdo->prepare("
+        SELECT COUNT(*) FROM loan_transactions 
+        WHERE loan_id = ? AND type = 'Approval' AND amount = ?
     ");
-    $stmt->execute([$no, $txnId, $loan_id, $loan['user_id'], $amount, $approvedAt]);
+    $stmt->execute([$loan_id, $amount]);
+    $alreadyExists = $stmt->fetchColumn() > 0;
+    
+    if (!$alreadyExists) {
+        $txnId = generateTransactionId('TXN');
+        $no    = getNextNo($pdo, 'loan_transactions');
+        $stmt  = $pdo->prepare("
+            INSERT INTO loan_transactions
+                (no, transaction_id, loan_id, user_id, type, amount, status, note, created_at)
+            VALUES (?, ?, ?, ?, 'Approval', ?, 'Approved', 'Loan approved and released.', ?)
+        ");
+        $stmt->execute([$no, $txnId, $loan_id, $loan['user_id'], $amount, $approvedAt]);
+    }
 
-    // ── 3. Generate billing schedule (28-day intervals) ──────
+    // ── 3. Update original Loan Application transaction status ─────
+    $pdo->prepare("
+        UPDATE loan_transactions 
+        SET status = 'Approved'
+        WHERE loan_id = ? AND type = 'Loan Application'
+    ")->execute([$loan_id]);
+
+    // ── 4. Generate billing schedule (28-day intervals) ──────
     //   Month 1 due  = today + 28 days
     //   Month 2 due  = today + 56 days  (28 × 2)
     //   Month N due  = today + (28 × N) days

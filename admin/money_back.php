@@ -7,28 +7,7 @@ require_once __DIR__ . '/../helpers.php';
 
 $adminId = $_SESSION['admin_id'];
 
-// Handle add income action
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'add_income') {
-    $amount = (float)($_POST['amount'] ?? 0);
-    $description = trim($_POST['description'] ?? '');
-    $earnedAt = $_POST['earned_at'] ?? date('Y-m-d');
-    
-    if ($amount <= 0) {
-        setFlash('danger', 'Please enter a valid amount greater than 0.');
-    } else {
-        // Insert into company_income table
-        $stmt = $pdo->prepare("
-            INSERT INTO company_income (amount, description, earned_at, created_at) 
-            VALUES (?, ?, ?, NOW())
-        ");
-        $stmt->execute([$amount, $description ?: 'Manual income entry', $earnedAt]);
-        setFlash('success', formatMoney($amount) . ' has been added to company income.');
-    }
-    
-    header('Location: money_back.php');
-    exit;
-}
-
+// Handle distribute action
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'distribute') {
     $result = distributeMoneyBack($pdo);
     
@@ -43,26 +22,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 // Get current stats
-$currentYear = (int)date('Y');
 $premiumCount = getPremiumMemberCount($pdo);
 
-// Calculate total income for this year (from company_income table)
-$stmt = $pdo->prepare("
-    SELECT COALESCE(SUM(amount), 0) as total_income 
-    FROM company_income 
-    WHERE YEAR(earned_at) = ?
-");
-$stmt->execute([$currentYear]);
-$totalIncome = (float)$stmt->fetchColumn();
+// Calculate NEW undistributed income (only interest from bills paid after last distribution)
+$newIncome = calculateNewMoneyBackIncome($pdo);
+$totalIncome = $newIncome; // This is now only the undistributed income
 
-// Calculate distribution: (Total Income x 0.02) ÷ ALL Premium members
-$moneyBackPool = $totalIncome * 0.02;
+// Calculate distribution: (New Income x 0.02) ÷ ALL Premium members
+$moneyBackPool = $newIncome * 0.02;
 $individualAmount = $premiumCount > 0 ? $moneyBackPool / $premiumCount : 0;
 
-// Check if already distributed this year
-$stmt = $pdo->prepare("SELECT COUNT(*) FROM money_back_distributions WHERE YEAR(distribution_date) = ?");
-$stmt->execute([$currentYear]);
-$alreadyDistributed = $stmt->fetchColumn() > 0;
+// Get last distribution date for display
+$lastDistributionDate = getLastDistributionDate($pdo);
+
+// Check if there's new income to distribute
+$hasNewIncome = $newIncome > 0;
 
 // Get all Premium members
 $premiumMembers = [];
@@ -83,16 +57,6 @@ if ($premiumCount > 0) {
 // Get distribution history
 $distributions = getMoneyBackHistory($pdo);
 
-// Get company income records
-$incomeRecords = [];
-$stmt = $pdo->prepare("
-    SELECT * FROM company_income 
-    ORDER BY earned_at DESC, created_at DESC 
-    LIMIT 20
-");
-$stmt->execute();
-$incomeRecords = $stmt->fetchAll();
-
 $pageTitle = 'Money Back Distribution';
 require_once __DIR__ . '/../includes/admin_header.php';
 ?>
@@ -100,36 +64,34 @@ require_once __DIR__ . '/../includes/admin_header.php';
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="fw-bold mb-0"><i class="bi bi-cash-stack text-success"></i> Money Back Distribution</h4>
     <div class="d-flex gap-2">
-        <button class="btn" style="background-color: #1e3a8a; color: white;" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
-            <i class="bi bi-plus-lg"></i> Add Income
-        </button>
-        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#distributionModal" <?= $alreadyDistributed || $premiumCount === 0 || $totalIncome <= 0 ? 'disabled' : '' ?>>
-            <i class="bi bi-send"></i> <?= $alreadyDistributed ? 'Already Distributed for ' . $currentYear : 'Distribute Money Back' ?>
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#distributionModal" <?= !$hasNewIncome || $premiumCount === 0 ? 'disabled' : '' ?>>
+            <i class="bi bi-send"></i> <?= !$hasNewIncome ? 'No New Income to Distribute' : 'Distribute Money Back' ?>
         </button>
     </div>
 </div>
 
 <?= showFlash() ?>
 
-<?php if ($alreadyDistributed): ?>
+<?php if (!$hasNewIncome): ?>
 <div class="alert alert-warning">
     <i class="bi bi-exclamation-triangle-fill"></i>
-    <strong>Already Distributed:</strong> Money back has already been distributed for year <?= $currentYear ?>. Each year can only have one distribution.
+    <strong>No New Income:</strong> All interest income has already been distributed, or no new completed billing payments have been received since the last distribution.
+    <?php if ($lastDistributionDate): ?>
+    <br><small class="text-muted">Last distribution: <?= date('M d, Y', strtotime($lastDistributionDate)) ?></small>
+    <?php endif; ?>
 </div>
 <?php elseif ($premiumCount === 0): ?>
 <div class="alert alert-info">
     <i class="bi bi-info-circle-fill"></i>
     <strong>No Premium Members:</strong> There are no active Premium members to distribute money back to.
 </div>
-<?php elseif ($totalIncome <= 0): ?>
-<div class="alert" style="background-color: #dc2626; color: white; border-color: #b91c1c;">
-    <i class="bi bi-exclamation-triangle-fill"></i>
-    <strong>No Income Available:</strong> No completed billing income found for year <?= $currentYear ?>. Cannot distribute from zero income. Add income records to enable distribution.
-</div>
 <?php else: ?>
 <div class="alert alert-success">
     <i class="bi bi-check-circle-fill"></i>
-    <strong>Ready to Distribute:</strong> <?= formatMoney($moneyBackPool) ?> (2% of total income) will be distributed equally among <?= $premiumCount ?> Premium members. Each will receive <?= formatMoney($individualAmount) ?>.
+    <strong>Ready to Distribute:</strong> <?= formatMoney($moneyBackPool) ?> (2% of new income) will be distributed equally among <?= $premiumCount ?> Premium members. Each will receive <?= formatMoney($individualAmount) ?>.
+    <?php if ($lastDistributionDate): ?>
+    <br><small class="text-muted">Calculating income since last distribution: <?= date('M d, Y', strtotime($lastDistributionDate)) ?></small>
+    <?php endif; ?>
 </div>
 <?php endif; ?>
 
@@ -138,9 +100,12 @@ require_once __DIR__ . '/../includes/admin_header.php';
     <div class="col-md-3">
         <div class="card border-0 shadow-sm" style="border-top: 4px solid #1e40af;">
             <div class="card-body text-center">
-                <div class="text-muted small mb-2">Total Income (<?= $currentYear ?>)</div>
+                <div class="text-muted small mb-2">New Undistributed Income</div>
                 <h4 class="fw-bold text-primary"><?= formatMoney($totalIncome) ?></h4>
-                <div class="text-muted small">From company earnings</div>
+                <div class="text-muted small">Interest since last distribution</div>
+                <?php if ($lastDistributionDate): ?>
+                <div class="text-muted small mt-1"><i class="bi bi-clock-history"></i> Since <?= date('M d, Y', strtotime($lastDistributionDate)) ?></div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -218,45 +183,6 @@ require_once __DIR__ . '/../includes/admin_header.php';
 </div>
 <?php endif; ?>
 
-<!-- Company Income Records -->
-<div class="card border-0 shadow-sm mb-4">
-    <div class="card-header bg-white border-0">
-        <h6 class="mb-0"><i class="bi bi-cash-stack text-success"></i> Company Income Records</h6>
-    </div>
-    <div class="card-body">
-        <?php if (empty($incomeRecords)): ?>
-        <div class="text-center py-4">
-            <div style="font-size: 48px; margin-bottom: 12px;">💰</div>
-            <div class="text-muted">No income records found</div>
-            <small class="text-muted">Add income records to track company earnings</small>
-        </div>
-        <?php else: ?>
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th>Date Earned</th>
-                        <th>Description</th>
-                        <th>Amount</th>
-                        <th>Added On</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach ($incomeRecords as $record): ?>
-                    <tr>
-                        <td><?= date('M d, Y', strtotime($record['earned_at'])) ?></td>
-                        <td><?= clean($record['description']) ?></td>
-                        <td class="fw-bold text-success"><?= formatMoney($record['amount']) ?></td>
-                        <td><small class="text-muted"><?= date('M d, Y H:i', strtotime($record['created_at'])) ?></small></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
-        </div>
-        <?php endif; ?>
-    </div>
-</div>
-
 <!-- Distribution History -->
 <?php if (!empty($distributions)): ?>
 <div class="card border-0 shadow-sm">
@@ -292,39 +218,6 @@ require_once __DIR__ . '/../includes/admin_header.php';
 </div>
 <?php endif; ?>
 
-<!-- Add Income Modal -->
-<div class="modal fade" id="addIncomeModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Add Company Income</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <form method="POST">
-                <input type="hidden" name="action" value="add_income">
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Amount</label>
-                        <input type="number" name="amount" class="form-control" step="0.01" min="0.01" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <input type="text" name="description" class="form-control" placeholder="Optional description">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Date Earned</label>
-                        <input type="date" name="earned_at" class="form-control" value="<?= date('Y-m-d') ?>" required>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Income</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <!-- Distribution Confirmation Modal -->
 <div class="modal fade" id="distributionModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -340,7 +233,7 @@ require_once __DIR__ . '/../includes/admin_header.php';
                 <div class="alert alert-warning d-flex align-items-center">
                     <i class="bi bi-exclamation-triangle-fill me-2"></i>
                     <div>
-                        <strong>Important:</strong> This action cannot be undone and can only be performed once per year (<?= $currentYear ?>).
+                        <strong>Important:</strong> This will distribute <strong><?= formatMoney($moneyBackPool) ?></strong> from new undistributed interest only. Once distributed, this interest cannot be distributed again.
                     </div>
                 </div>
                 

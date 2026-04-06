@@ -34,16 +34,26 @@ if ($balance + $amount > SAVINGS_MAX) {
     header('Location: ' . APP_URL . '/user/savings/index.php'); exit;
 }
 
-// Generate transaction
-$txnId = generateTransactionId('SAV');
-$no    = getNextNo($pdo, 'savings_transactions');
-
-// Insert transaction record
+// Check for duplicate transaction today
 $stmt = $pdo->prepare("
-    INSERT INTO savings_transactions (no, transaction_id, user_id, category, amount, status, requested_at, processed_at)
-    VALUES (?, ?, ?, 'Deposit', ?, 'Completed', NOW(), NOW())
+    SELECT COUNT(*) FROM savings_transactions 
+    WHERE user_id = ? AND category = 'Deposit' AND DATE(requested_at) = CURDATE()
 ");
-$stmt->execute([$no, $txnId, $userId, $amount]);
+$stmt->execute([$userId]);
+$alreadyExists = $stmt->fetchColumn() > 0;
+
+if (!$alreadyExists) {
+    // Generate transaction
+    $txnId = generateTransactionId('SAV');
+    $no    = getNextNo($pdo, 'savings_transactions');
+
+    // Insert transaction record
+    $stmt = $pdo->prepare("
+        INSERT INTO savings_transactions (no, transaction_id, user_id, category, amount, status, requested_at, processed_at)
+        VALUES (?, ?, ?, 'Deposit', ?, 'Completed', NOW(), NOW())
+    ");
+    $stmt->execute([$no, $txnId, $userId, $amount]);
+}
 
 // Update or create savings balance
 if ($savings) {

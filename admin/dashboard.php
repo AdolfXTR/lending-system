@@ -57,9 +57,9 @@ $recentRegs = $pdo->query("
     SELECT * FROM users WHERE status = 'Pending' ORDER BY created_at DESC LIMIT 5
 ")->fetchAll();
 
-// Company earnings for current year
+// Company earnings for current year (interest only - actual profit)
 $stmt = $pdo->prepare("
-    SELECT COALESCE(SUM(total_due), 0) as total_income 
+    SELECT COALESCE(SUM(interest), 0) as total_income 
     FROM billing 
     WHERE status = 'Completed' 
     AND YEAR(paid_at) = YEAR(CURRENT_DATE)

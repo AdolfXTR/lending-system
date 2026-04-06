@@ -52,7 +52,7 @@ $stmt->execute([$user_id]);
 $billingHistory = $stmt->fetchAll();
 $chartLabels = array_map(fn($b) => 'Mo. '.$b['month_number'], $billingHistory);
 $chartData   = array_map(fn($b) => (float)$b['total_due'], $billingHistory);
-$chartColors = array_map(fn($b) => $b['status'] === 'Completed' ? 'rgba(22,163,74,0.7)' : 'rgba(26,69,168,0.65)', $billingHistory);
+$chartColors = array_map(fn($b) => $b['status'] === 'Completed' ? 'rgba(34,197,94,0.8)' : 'rgba(59,130,246,0.8)', $billingHistory);
 
 $daysUntilDue = null; $dueSeverity = 'normal';
 if ($currentBill) {
@@ -81,10 +81,10 @@ require_once __DIR__ . '/../includes/header.php';
 .c-blue .s-amount{color:#1a45a8;}.c-orange .s-amount{color:#ea7c0a;}.c-green .s-amount{color:#16a34a;}.c-gray .s-amount{color:#94a3b8;}
 .s-sub{font-size:11px;color:#9ca3af;}.s-link{font-size:12px;color:#1a45a8;text-decoration:none;font-weight:600;margin-top:5px;display:inline-block;}
 .quick-actions{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:22px;}
-.qa-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:inherit;transition:all .15s;}
-.qa-primary{background:#0f2557;color:#f5c842;}.qa-primary:hover{background:#1a3a7a;color:#f5c842;}
-.qa-outline{background:#fff;color:#0f2557;border:1.5px solid #0f2557;}.qa-outline:hover{background:#0f2557;color:#f5c842;}
-.qa-soft{background:#f0f4ff;color:#1a45a8;}.qa-soft:hover{background:#dbe4ff;}
+.qa-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;text-decoration:none;border:none;cursor:pointer;font-family:inherit;transition:all .15s;}
+.qa-primary{background:#1e3a5f;color:#f5c842;}.qa-primary:hover{background:#2a4a7f;color:#f5c842;}
+.qa-outline{background:#f8fafc;color:#1e3a5f;border:1.5px solid #e2e8f0;}.qa-outline:hover{background:#1e3a5f;color:#f5c842;border-color:#1e3a5f;}
+.qa-soft{background:#f8fafc;color:#1e3a5f;border:1.5px solid #e2e8f0;}.qa-soft:hover{background:#1e3a5f;color:#f5c842;border-color:#1e3a5f;}
 .main-grid{display:grid;grid-template-columns:1fr 330px;gap:18px;}
 @media(max-width:900px){.main-grid{grid-template-columns:1fr;}}
 .sc{background:#fff;border-radius:14px;border:1px solid rgba(0,0,0,.07);box-shadow:0 1px 4px rgba(0,0,0,.05);overflow:hidden;margin-bottom:18px;}
@@ -93,7 +93,7 @@ require_once __DIR__ . '/../includes/header.php';
 .sc-title{font-size:13px;font-weight:700;color:#1a1f2e;display:flex;align-items:center;gap:7px;margin:0;}
 .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .bill-row{display:flex;justify-content:space-between;align-items:center;padding:9px 18px;border-bottom:1px solid rgba(0,0,0,.04);font-size:13px;}
-.bill-row:last-child{border-bottom:none;}.bl{color:#6b7280;}.bv{font-weight:600;color:#1a1f2e;}.bv.danger{color:#dc2626;}
+.bill-row:last-child{border-bottom:none;}.bl{color:#6b7280;}.bv{font-weight:600;color:#1a1f2e;}.bv.danger{color:#dc2626;}.bv.warning{color:#f59e0b;}
 .bill-total{background:#0f2557;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;}
 .tl{color:rgba(255,255,255,.6);font-size:13px;}.tv{color:#f5c842;font-size:22px;font-weight:700;}
 .due-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
@@ -101,10 +101,10 @@ require_once __DIR__ . '/../includes/header.php';
 .prog-bar{height:10px;background:#e8ecf5;border-radius:20px;overflow:hidden;}
 .prog-fill{height:100%;border-radius:20px;background:#1a45a8;transition:width .4s;}
 .txn-tbl{width:100%;border-collapse:collapse;font-size:13px;}
-.txn-tbl th{padding:9px 14px;text-align:left;font-size:11px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid rgba(0,0,0,.06);background:#fafbfc;}
-.txn-tbl td{padding:11px 14px;border-bottom:1px solid rgba(0,0,0,.04);}
-.txn-tbl tr:last-child td{border-bottom:none;}.txn-tbl tbody tr:hover{background:#fafbfc;}
-.txn-mono{font-family:monospace;font-size:11px;color:#9ca3af;}
+.txn-tbl th{padding:9px 14px;text-align:left;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #f3f4f6;background:#fafbfc;}
+.txn-tbl td{padding:11px 14px;border-bottom:1px solid #f3f4f6;color:#111827;}
+.txn-tbl tr:last-child td{border-bottom:none;}.txn-tbl tbody tr:hover{background:#f9fafb;}
+.txn-mono{font-family:monospace;font-size:11px;color:#6b7280;}
 .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-block;}
 .b-approved{background:#dcfce7;color:#16a34a;}.b-pending{background:#fef3c7;color:#d97706;}.b-rejected{background:#fee2e2;color:#dc2626;}
 .lp-amount{font-size:30px;font-weight:700;color:#0f2557;letter-spacing:-1px;}
@@ -132,7 +132,7 @@ body.dark-mode .sc-head{border-color:rgba(255,255,255,.1);}
 body.dark-mode .sc-title{color:#f1f5f9;}
 
 body.dark-mode .bill-row{border-color:rgba(255,255,255,.1);}
-body.dark-mode .bl{color:#94a3b8;} body.dark-mode .bv{color:#f1f5f9;} body.dark-mode .bv.danger{color:#f87171;}
+body.dark-mode .bl{color:#94a3b8;} body.dark-mode .bv{color:#f1f5f9;} body.dark-mode .bv.danger{color:#f87171;} body.dark-mode .bv.warning{color:#fbbf24;}
 body.dark-mode .bill-total{background:#0f2557 !important;}
 body.dark-mode .tl{color:#94a3b8;} body.dark-mode .tv{color:#fbbf24;}
 
@@ -241,8 +241,6 @@ body.dark-mode div[style*="background:#fef2f2"]{background:#7f1d1d !important;co
     <?php if (!$loan && !$pendingLoan): ?><a href="<?= APP_URL ?>/user/loan/apply.php" class="qa-btn qa-primary">💳 Apply for Loan</a><?php endif; ?>
     <?php if ($accountType==='Premium'): ?>
         <a href="<?= APP_URL ?>/user/savings/index.php" class="qa-btn qa-outline">🏦 Manage Savings</a>
-    <?php else: ?>
-        <a href="#" class="qa-btn qa-outline" style="background:#fef3c7;color:#92400e;border-color:#f59e0b;" title="Upgrade to Premium to unlock Savings features">🔒 Upgrade to Premium</a>
     <?php endif; ?>
     <a href="<?= APP_URL ?>/user/billing/index.php" class="qa-btn qa-soft">🧾 View Billing</a>
     <a href="<?= APP_URL ?>/user/loan/index.php" class="qa-btn qa-soft">📋 Loan History</a>
@@ -265,7 +263,7 @@ body.dark-mode div[style*="background:#fef2f2"]{background:#7f1d1d !important;co
             <?php endif; ?>
             <div class="bill-row"><span class="bl">Month</span><span class="bv">Month <?= $currentBill['month_number'] ?></span></div>
             <div class="bill-row"><span class="bl">Principal</span><span class="bv"><?= formatMoney($currentBill['amount_due']) ?></span></div>
-            <div class="bill-row"><span class="bl">Interest (3%)</span><span class="bv <?= $currentBill['interest']>0?'danger':'' ?>"><?= $currentBill['interest']>0?formatMoney($currentBill['interest']):'—' ?></span></div>
+            <div class="bill-row"><span class="bl">Interest (3%)</span><span class="bv <?= $currentBill['interest']>0?'warning':'' ?>"><?= $currentBill['interest']>0?formatMoney($currentBill['interest']):'—' ?></span></div>
             <div class="bill-row"><span class="bl">Penalty (2%)</span><span class="bv <?= $currentBill['penalty']>0?'danger':'' ?>"><?= $currentBill['penalty']>0?formatMoney($currentBill['penalty']):'—' ?></span></div>
             <div class="bill-total"><span class="tl">Due <?= date('F d, Y', strtotime($currentBill['due_date'])) ?></span><span class="tv"><?= formatMoney($currentBill['total_due']) ?></span></div>
         <?php else: ?>
@@ -295,13 +293,18 @@ body.dark-mode div[style*="background:#fef2f2"]{background:#7f1d1d !important;co
             <thead><tr><th>Transaction ID</th><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
             <tbody>
             <?php foreach ($recentTxns as $t):
-                $sc = match(strtolower($t['status'])) { 'approved'=>'b-approved','pending'=>'b-pending','rejected'=>'b-rejected', default=>'b-pending' };
+                // Check if this is a loan application and the loan has been approved
+                $displayStatus = $t['status'];
+                if (strtolower($t['type']) === 'loan application' && $loan && $loan['status'] === 'Active') {
+                    $displayStatus = 'Approved';
+                }
+                $sc = match(strtolower($displayStatus)) { 'approved'=>'b-approved','pending'=>'b-pending','rejected'=>'b-rejected', default=>'b-pending' };
             ?>
                 <tr>
                     <td><span class="txn-mono"><?= htmlspecialchars($t['transaction_id']) ?></span></td>
                     <td><?= htmlspecialchars($t['type']) ?></td>
                     <td style="font-weight:700;"><?= formatMoney($t['amount']) ?></td>
-                    <td><span class="badge <?= $sc ?>"><?= $t['status'] ?></span></td>
+                    <td><span class="badge <?= $sc ?>"><?= $displayStatus ?></span></td>
                     <td style="color:#9ca3af;"><?= date('M d, Y', strtotime($t['created_at'])) ?></td>
                 </tr>
             <?php endforeach; ?>
@@ -333,7 +336,7 @@ body.dark-mode div[style*="background:#fef2f2"]{background:#7f1d1d !important;co
             </div>
             <div style="background:#f0f4ff;border-radius:10px;padding:12px;margin-bottom:14px;">
                 <div class="lp-row"><span class="lp-l">Received</span><span class="lp-v"><?= formatMoney($loan['received_amount']) ?></span></div>
-                <div class="lp-row"><span class="lp-l">Term</span><span class="lp-v"><?= $totalMonths ?> months</span></div>
+                <div class="lp-row"><span class="lp-l">Term</span><span class="lp-v"><?= $totalMonths ?> month<?= $totalMonths > 1 ? 's' : '' ?></span></div>
                 <div class="lp-row"><span class="lp-l">Monthly</span><span class="lp-v"><?= formatMoney($loan['applied_amount']/$totalMonths) ?></span></div>
                 <?php if ($currentBill): ?>
                 <div class="lp-row"><span class="lp-l">Next Due</span><span class="lp-v blue"><?= date('M d, Y', strtotime($currentBill['due_date'])) ?></span></div>

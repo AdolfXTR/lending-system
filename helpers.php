@@ -154,17 +154,57 @@ function generateStandardTransactionId(string $type = 'TXN'): string {
 }
 
 // ── Money Back System Functions ────────────────────────────────
+function getLastDistributionDate(PDO $pdo): ?string {
+    $stmt = $pdo->query("
+        SELECT MAX(distributed_up_to_date) as last_date 
+        FROM money_back_distributions 
+        WHERE distributed_up_to_date IS NOT NULL
+    ");
+    $lastDate = $stmt->fetchColumn();
+    return $lastDate ?: null;
+}
+
+function calculateNewMoneyBackIncome(PDO $pdo): float {
+    $lastDistributionDate = getLastDistributionDate($pdo);
+    
+    if ($lastDistributionDate) {
+        // Only count interest from bills paid AFTER the last distribution
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(interest), 0) as total_income 
+            FROM billing 
+            WHERE status = 'Completed' 
+            AND paid_at > ?
+        ");
+        $stmt->execute([$lastDistributionDate]);
+    } else {
+        // No previous distribution - count all completed billing interest
+        $stmt = $pdo->prepare("
+            SELECT COALESCE(SUM(interest), 0) as total_income 
+            FROM billing 
+            WHERE status = 'Completed'
+        ");
+        $stmt->execute();
+    }
+    
+    return (float)$stmt->fetchColumn();
+}
+
+/**
+ * @deprecated Use calculateNewMoneyBackIncome() instead
+ * Calculate total interest income from billing table in the current year
+ */
 function calculateMoneyBackDistribution(PDO $pdo): float {
-    // Calculate total company income from company_income table in the current year
+    // Calculate total interest income from billing table in the current year
     $stmt = $pdo->prepare("
-        SELECT COALESCE(SUM(amount), 0) as total_income 
-        FROM company_income 
-        WHERE YEAR(earned_at) = YEAR(CURRENT_DATE)
+        SELECT COALESCE(SUM(interest), 0) as total_income 
+        FROM billing 
+        WHERE status = 'Completed' 
+        AND YEAR(paid_at) = YEAR(CURRENT_DATE)
     ");
     $stmt->execute();
     $totalIncome = (float)$stmt->fetchColumn();
     
-    // Calculate 2% of total income
+    // Calculate 2% of total interest income
     $moneyBackPool = $totalIncome * 0.02;
     
     return $moneyBackPool;
@@ -182,7 +222,8 @@ function getPremiumMemberCount(PDO $pdo): int {
 }
 
 function calculateIndividualMoneyBack(PDO $pdo): float {
-    $moneyBackPool = calculateMoneyBackDistribution($pdo);
+    $newIncome = calculateNewMoneyBackIncome($pdo);
+    $moneyBackPool = $newIncome * 0.02;
     $premiumCount = getPremiumMemberCount($pdo);
     
     if ($premiumCount === 0) {
@@ -193,16 +234,18 @@ function calculateIndividualMoneyBack(PDO $pdo): float {
 }
 
 function distributeMoneyBack(PDO $pdo): array {
-    $currentYear = (int)date('Y');
+    // Get the last distribution date to calculate new income since then
+    $lastDistributionDate = getLastDistributionDate($pdo);
     
-    // Check if distribution already done this year
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM money_back_distributions WHERE YEAR(distribution_date) = ?");
-    $stmt->execute([$currentYear]);
-    $alreadyDistributed = $stmt->fetchColumn() > 0;
+    // Calculate only NEW interest income (since last distribution)
+    $newIncome = calculateNewMoneyBackIncome($pdo);
     
-    if ($alreadyDistributed) {
-        return ['distributed' => false, 'message' => 'Money back has already been distributed for year ' . $currentYear . '. Each year can only have one distribution.'];
+    if ($newIncome <= 0) {
+        return ['distributed' => false, 'message' => 'No new interest income available for distribution. All interest has already been distributed or no completed billing payments found.'];
     }
+    
+    // Calculate distribution: (New Income x 0.02) ÷ ALL Premium members
+    $moneyBackPool = $newIncome * 0.02;
     
     // Get ALL active Premium members
     $stmt = $pdo->prepare("
@@ -220,44 +263,61 @@ function distributeMoneyBack(PDO $pdo): array {
         return ['distributed' => false, 'message' => 'No active Premium members found for distribution.'];
     }
     
-    // Calculate total income for this year
-    $stmt = $pdo->prepare("
-        SELECT COALESCE(SUM(amount), 0) as total_income 
-        FROM company_income 
-        WHERE YEAR(earned_at) = ?
-    ");
-    $stmt->execute([$currentYear]);
-    $totalIncome = (float)$stmt->fetchColumn();
-    
-    if ($totalIncome <= 0) {
-        return ['distributed' => false, 'message' => 'No company income found for year ' . $currentYear . '. Cannot distribute from zero income.'];
-    }
-    
-    // Calculate distribution: (Total Income x 0.02) ÷ ALL Premium members
-    $moneyBackPool = $totalIncome * 0.02;
     $individualAmount = $moneyBackPool / count($premiumMembers);
     
     if ($individualAmount <= 0) {
         return ['distributed' => false, 'message' => 'Individual distribution amount is too low to process.'];
     }
     
-    // Create distribution record
+    // Find the latest paid_at date from the bills we're distributing
+    // This will be our new distributed_up_to_date
+    if ($lastDistributionDate) {
+        $stmt = $pdo->prepare("
+            SELECT MAX(paid_at) as latest_paid 
+            FROM billing 
+            WHERE status = 'Completed' 
+            AND paid_at > ?
+        ");
+        $stmt->execute([$lastDistributionDate]);
+    } else {
+        $stmt = $pdo->query("
+            SELECT MAX(paid_at) as latest_paid 
+            FROM billing 
+            WHERE status = 'Completed'
+        ");
+    }
+    $latestPaidDate = $stmt->fetchColumn();
+    
+    // Create distribution record with distributed_up_to_date
     $stmt = $pdo->prepare("
         INSERT INTO money_back_distributions 
-        (total_pool, premium_count, individual_amount, total_distributed, distribution_date) 
-        VALUES (?, ?, ?, ?, NOW())
+        (total_pool, premium_count, individual_amount, total_distributed, distribution_date, distributed_up_to_date) 
+        VALUES (?, ?, ?, ?, NOW(), ?)
     ");
     $stmt->execute([
         $moneyBackPool,
         count($premiumMembers),
         $individualAmount,
-        $moneyBackPool
+        $moneyBackPool,
+        $latestPaidDate
     ]);
     $distributionId = $pdo->lastInsertId();
     
     // Distribute to ALL Premium members
     $distributedCount = 0;
     foreach ($premiumMembers as $member) {
+        // Check for duplicate transaction today
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) FROM savings_transactions 
+            WHERE user_id = ? AND category = 'Deposit' AND DATE(requested_at) = CURDATE()
+        ");
+        $stmt->execute([$member['id']]);
+        $alreadyExists = $stmt->fetchColumn() > 0;
+        
+        if ($alreadyExists) {
+            continue; // Skip if already has a deposit transaction today
+        }
+        
         // Create savings transaction
         $txnId = generateTransactionId('MBK');
         $no = getNextNo($pdo, 'savings_transactions');

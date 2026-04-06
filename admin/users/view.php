@@ -643,7 +643,26 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                             <tr><th class="text-muted">Username</th><td><?= clean($user['username']) ?></td></tr>
                             <tr><th class="text-muted">Gender</th><td><?= clean($user['gender'] ?? '—') ?></td></tr>
                             <tr><th class="text-muted">Birthday</th><td><?= $user['birthday'] ? date('F d, Y', strtotime($user['birthday'])) : '—' ?></td></tr>
-                            <tr><th class="text-muted">Age</th><td><?= $user['age'] ?? '—' ?></td></tr>
+                            <?php
+                            // Calculate age with validation
+                            $ageDisplay = '—';
+                            if (!empty($user['birthday']) && $user['birthday'] !== '0000-00-00') {
+                                $birthYear = (int)date('Y', strtotime($user['birthday']));
+                                $currentYear = (int)date('Y');
+                                $age = $currentYear - $birthYear;
+                                // Adjust if birthday hasn't occurred this year
+                                if (date('md') < date('md', strtotime($user['birthday']))) {
+                                    $age--;
+                                }
+                                // Validate: age must be between 0 and 120
+                                if ($age >= 0 && $age <= 120) {
+                                    $ageDisplay = $age . ' years old';
+                                } else {
+                                    $ageDisplay = 'N/A';
+                                }
+                            }
+                            ?>
+                            <tr><th class="text-muted">Age</th><td><?= $ageDisplay ?></td></tr>
                             <tr><th class="text-muted">Address</th><td><?= clean($user['address'] ?? '—') ?></td></tr>
                             <tr><th class="text-muted">Email</th><td><?= clean($user['email']) ?></td></tr>
                             <tr><th class="text-muted">Contact</th><td><?= clean($user['contact_number'] ?? '—') ?></td></tr>
@@ -688,7 +707,30 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                     <div class="card-header bg-white fw-bold border-0 pt-3">
                         <i class="bi bi-bank text-warning"></i> Bank Details
                     </div>
-                    <!-- Documents -->
+                    <div class="card-body">
+                        <?php
+                        // Check if any bank details exist
+                        $hasBankDetails = !empty($user['bank_name']) || !empty($user['bank_account_number']) || !empty($user['card_holder_name']);
+                        ?>
+                        <?php if ($hasBankDetails): ?>
+                            <table class="table table-sm table-borderless mb-0">
+                                <tr><th class="text-muted" width="40%">Bank</th><td><?= clean($user['bank_name'] ?? '—') ?></td></tr>
+                                <tr><th class="text-muted">Account No.</th><td><?= clean($user['bank_account_number'] ?? '—') ?></td></tr>
+                                <tr><th class="text-muted">Card Holder</th><td><?= clean($user['card_holder_name'] ?? '—') ?></td></tr>
+                            </table>
+                        <?php else: ?>
+                            <div class="text-muted text-center py-3">
+                                <i class="bi bi-bank fs-4 d-block mb-2"></i>
+                                No bank details on file
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documents Section -->
+        <div class="row g-3 mt-1">
             <div class="col-12">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white fw-bold border-0 pt-3">
@@ -751,17 +793,9 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                     </div>
                 </div>
             </div>
-                    <div class="card-body">
-                        <table class="table table-sm table-borderless mb-0">
-                            <tr><th class="text-muted" width="40%">Bank</th><td><?= clean($user['bank_name'] ?? '—') ?></td></tr>
-                            <tr><th class="text-muted">Account No.</th><td><?= clean($user['bank_account_number'] ?? '—') ?></td></tr>
-                            <tr><th class="text-muted">Card Holder</th><td><?= clean($user['card_holder_name'] ?? '—') ?></td></tr>
-                        </table>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
+    <!-- End Profile Tab -->
 
     <!-- Loans Tab -->
     <div class="tab-pane fade" id="loans">

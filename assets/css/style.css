@@ -6,20 +6,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
 :root {
-  --navy:       #0f2557;
-  --navy-light: #1a3a7a;
+  --navy:       #1e293b;
+  --navy-light: #334155;
   --navy-dark:  #081840;
   --gold:       #f5c842;
   --gold-light: #fef8e6;
   --gold-dark:  #b07e00;
   --blue:       #1a45a8;
   --blue-light: #e6f0fb;
-  --bg:         #f0f4f8;
-  --bg-dark:    #e8ecf5;
-  --white:      #ffffff;
-  --text:       #1a1f2e;
-  --text-muted: #6b7280;
-  --border:     rgba(0,0,0,0.08);
+  --bg:         #e8edf2;
+  --bg-dark:    #e2e8ef;
+  --white:      #f0f4f8;
+  --text:       #1a2332;
+  --text-muted: #5a6a7e;
+  --border:     #d1d9e0;
   --success:    #16a34a;
   --success-bg: #dcfce7;
   --danger:     #dc2626;
@@ -355,7 +355,7 @@ body {
   color: var(--text);
 }
 .table-lending tr:last-child td { border-bottom: none; }
-.table-lending tbody tr:hover { background: #f8fafc; }
+.table-lending tbody tr:hover { background: #e2e8ef; }
 .txn-id-mono { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text-muted); }
 
 /* ── FORMS ──────────────────────────────────────────────── */

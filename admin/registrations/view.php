@@ -22,64 +22,114 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 <style>
 /* Enhanced Application Review Styles */
 .app-header {
-    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     border-radius: 16px;
     padding: 32px;
     margin-bottom: 32px;
-    border: 1px solid rgba(0,0,0,0.05);
     position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
 }
 
-.sticky-actions {
-    position: sticky;
-    top: 70px;
-    z-index: 100;
+.app-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.05"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>') repeat;
+}
+
+.app-header-content {
+    position: relative;
+    z-index: 1;
     display: flex;
-    gap: 12px;
-    justify-content: flex-end;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .app-avatar {
-    width: 64px;
-    height: 64px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 32px;
     font-weight: 700;
-    margin-right: 20px;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    margin-right: 24px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    border: 3px solid rgba(255,255,255,0.3);
 }
 
 .app-title {
     font-size: 28px;
     font-weight: 800;
-    color: #1a202c;
+    color: white;
     margin: 0;
     display: flex;
     align-items: center;
 }
 
 .app-subtitle {
-    color: #64748b;
+    color: rgba(255,255,255,0.8);
     font-size: 15px;
     margin: 4px 0 0 0;
 }
 
-.status-badge-active {
+/* Header Action Buttons */
+.header-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.btn-header {
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s;
+    border: none;
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 16px;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn-header:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+}
+
+.btn-header-approve {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.btn-header-reject {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+}
+
+.status-badge-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
     border-radius: 20px;
     font-size: 14px;
     font-weight: 600;
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #a7f3d0;
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(10px);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
 }
 
 .pulsing-dot {
@@ -218,9 +268,21 @@ require_once __DIR__ . '/../../includes/admin_header.php';
     background: #f8fafc;
 }
 
-.info-grid-item.important {
+.info-grid-item.income-highlight {
     background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-    border: 1px solid #f59e0b;
+    border: 2px solid #f59e0b;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.info-grid-item.income-highlight .info-icon {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.info-grid-item.income-highlight .info-value {
+    color: #92400e;
+    font-weight: 700;
+    font-size: 16px;
 }
 
 .info-icon {
@@ -871,41 +933,39 @@ require_once __DIR__ . '/../../includes/admin_header.php';
 }
 </style>
 
-<!-- Application Header -->
+<!-- Application Header with Gradient Banner -->
 <div class="app-header">
-    <div style="display: flex; align-items: center;">
-        <div class="app-avatar">
-            <?= strtoupper(substr($user['first_name'],0,1).substr($user['last_name'],0,1)) ?>
+    <div class="app-header-content">
+        <div style="display: flex; align-items: center;">
+            <div class="app-avatar">
+                <?= strtoupper(substr($user['first_name'],0,1).substr($user['last_name'],0,1)) ?>
+            </div>
+            <div>
+                <a href="index.php" class="text-decoration-none text-white small d-inline-block mb-1" style="opacity: 0.9;">
+                    <i class="bi bi-arrow-left"></i> Back to Applications
+                </a>
+                <h1 class="app-title">
+                    <?= clean($user['first_name'] . ' ' . $user['last_name']) ?>
+                </h1>
+                <p class="app-subtitle">Application Review • ID #<?= $user['id'] ?> • Applied <?= date('F j, Y', strtotime($user['created_at'])) ?></p>
+            </div>
         </div>
-        <div>
-            <a href="index.php" class="text-decoration-none text-muted small">
-                <i class="bi bi-arrow-left"></i> Back to Applications
-            </a>
-            <h1 class="app-title">
-                <?= clean($user['first_name'] . ' ' . $user['last_name']) ?>
-            </h1>
-            <p class="app-subtitle">Application Review • ID #<?= $user['id'] ?> • Applied <?= date('F j, Y', strtotime($user['created_at'])) ?></p>
-        </div>
-    </div>
-    <?php if ($user['status'] === 'Pending'): ?>
-        <div class="sticky-actions">
-            <form method="POST" action="approve.php" id="approveForm" style="display: inline;">
-                <input type="hidden" name="id" value="<?= $user['id'] ?>">
-                <button type="button" id="approveBtn" class="btn-action btn-approve" disabled onclick="handleApproveClick(event)" style="position: relative;">
+        <?php if ($user['status'] === 'Pending'): ?>
+            <div class="header-actions">
+                <button type="button" id="approveBtn" class="btn-header btn-header-approve" disabled onclick="handleApproveClick(event)">
                     <i class="bi bi-check-circle"></i> Approve
-                    <span class="verification-tooltip" id="approveTooltip">Complete all verifications before approving</span>
                 </button>
-            </form>
-            <button class="btn-action btn-reject" data-bs-toggle="modal" data-bs-target="#rejectModal">
-                <i class="bi bi-x-circle"></i> Reject
-            </button>
-        </div>
-    <?php else: ?>
-        <div class="status-badge-active">
-            <span class="pulsing-dot"></span>
-            <?= $user['status'] ?>
-        </div>
-    <?php endif; ?>
+                <button class="btn-header btn-header-reject" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                    <i class="bi bi-x-circle"></i> Reject
+                </button>
+            </div>
+        <?php else: ?>
+            <div class="status-badge-header">
+                <span class="pulsing-dot"></span>
+                <?= $user['status'] ?>
+            </div>
+        <?php endif; ?>
+    </div>
 </div>
 
 <?= showFlash() ?>
@@ -1060,7 +1120,7 @@ require_once __DIR__ . '/../../includes/admin_header.php';
                                     <div class="info-value"><?= clean($user['position'] ?? '—') ?></div>
                                 </div>
                             </div>
-                            <div class="info-grid-item important">
+                            <div class="info-grid-item income-highlight">
                                 <div class="info-icon money">
                                     <i class="bi bi-currency-dollar"></i>
                                 </div>

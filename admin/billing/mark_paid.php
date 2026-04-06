@@ -61,18 +61,27 @@ try {
                 $pdo->prepare("UPDATE users SET loan_limit=?, max_term_months=? WHERE id=?")
                     ->execute([$newLimit, $newMaxTerm, $bill['user_id']]);
 
-                // Record the increase in loan_transactions
-                $txnId = generateTransactionId('LIM');
-                $no    = getNextNo($pdo, 'loan_transactions');
-                $pdo->prepare("
-                    INSERT INTO loan_transactions (no, transaction_id, loan_id, user_id, type, amount, status, note, created_at)
-                    VALUES (?, ?, ?, ?, 'Limit Increase', ?, 'Approved', ?, ?)
-                ")->execute([
-                    $no, $txnId, $bill['loan_id'], $bill['user_id'],
-                    $newLimit,
-                    "Loan limit increased to ₱" . number_format($newLimit, 2) . ". Max term increased to {$newMaxTerm} months.",
-                    $now
-                ]);
+                // Check for duplicate transaction with same loan_id, type, and amount
+                $stmt = $pdo->prepare("
+                    SELECT COUNT(*) FROM loan_transactions 
+                    WHERE loan_id = ? AND type = 'Limit Increase' AND amount = ?
+                ");
+                $stmt->execute([$bill['loan_id'], $newLimit]);
+                $alreadyExists = $stmt->fetchColumn() > 0;
+                
+                if (!$alreadyExists) {
+                    $txnId = generateTransactionId('LIM');
+                    $no    = getNextNo($pdo, 'loan_transactions');
+                    $pdo->prepare("
+                        INSERT INTO loan_transactions (no, transaction_id, loan_id, user_id, type, amount, status, note, created_at)
+                        VALUES (?, ?, ?, ?, 'Limit Increase', ?, 'Approved', ?, ?)
+                    ")->execute([
+                        $no, $txnId, $bill['loan_id'], $bill['user_id'],
+                        $newLimit,
+                        "Loan limit increased to ₱" . number_format($newLimit, 2) . ". Max term increased to {$newMaxTerm} months.",
+                        $now
+                    ]);
+                }
             }
         }
     }
